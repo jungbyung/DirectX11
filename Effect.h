@@ -25,10 +25,28 @@ public:
 	VOID SetWroldViewProj(CXMMATRIX M) { mWorldViewProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
 };
 
+class TextureEffect : public Effect
+{
+public:
+	TextureEffect(ID3D11Device* pDevice, const char* fileName);
+	~TextureEffect();
+
+	ID3DX11EffectTechnique* mTech;
+
+	ID3DX11EffectMatrixVariable* mWorldViewProj;
+	ID3DX11EffectShaderResourceVariable* mTex;
+	ID3DX11EffectMatrixVariable* mTexTransform;
+
+	VOID SetTexTransform(CXMMATRIX M) { mTexTransform->SetMatrix(reinterpret_cast<const float*>(&M)); }
+	VOID SetWroldViewProj(CXMMATRIX M) { mWorldViewProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
+	VOID SetTexture(ID3D11ShaderResourceView* tex) { mTex->SetResource(tex); }
+};
+
 class Effects
 {
 public:
 	static VOID Init(ID3D11Device* pDevice);
 
 	static PointEffect* PointEffectFX;
+	static TextureEffect* TextureEffectFX;
 };

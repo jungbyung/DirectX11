@@ -19,5 +19,27 @@ public:
 
 	HRESULT Init(ID3D11Device* pDevice);
 	VOID Update();
-	void Draw(ID3D11DeviceContext* dc, CXMMATRIX ViewProj);
+	VOID Draw(ID3D11DeviceContext* dc, CXMMATRIX ViewProj);
+};
+
+class TextureCube : public Object
+{
+private:
+	ID3D11Buffer* mVB;
+	ID3D11Buffer* mIB;
+	struct PT
+	{
+		XMFLOAT3 pos;
+		XMFLOAT2 tex;
+	};
+
+	ID3D11ShaderResourceView* mTexture;
+
+public:
+	TextureCube();
+	~TextureCube();
+
+	HRESULT Init(ID3D11Device* pDevice);
+	VOID Update();
+	VOID Draw(ID3D11DeviceContext* dc, CXMMATRIX ViewProj);
 };

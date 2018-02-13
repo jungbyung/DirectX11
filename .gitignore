@@ -30,3 +30,12 @@
 *.exe
 *.out
 *.app
+
+# ignore all files in the build/ directory
+build/
+ipch/
+debug/
+
+*.db
+*.vc.db
+*.vc.opendb

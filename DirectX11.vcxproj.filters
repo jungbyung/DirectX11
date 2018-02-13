@@ -131,5 +131,8 @@
     <FxCompile Include="FX\PointColor.fx">
       <Filter>FX</Filter>
     </FxCompile>
+    <FxCompile Include="FX\Texture.fx">
+      <Filter>FX</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

@@ -35,6 +35,9 @@
 #include <map>
 #include <vector>
 #include <fbxsdk.h>
+#include <comdef.h>
+
+//_bstr_t b(ws/s) -> wchar_t* <-> char* º¯È¯
 
 #pragma comment(lib, "libfbxsdk-md.lib")
 

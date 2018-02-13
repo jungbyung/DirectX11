@@ -35,8 +35,23 @@ PointEffect::~PointEffect()
 }
 
 PointEffect*			Effects::PointEffectFX = nullptr;
+TextureEffect*			Effects::TextureEffectFX = nullptr;
 
 VOID Effects::Init(ID3D11Device * pDevice)
 {
 	PointEffectFX = new PointEffect(pDevice, "fx/PointColor.fxo");
+	TextureEffectFX = new TextureEffect(pDevice, "fx/Texture.fxo");
+}
+
+TextureEffect::TextureEffect(ID3D11Device * pDevice, const char * fileName)
+	: Effect(pDevice, fileName)
+{
+	mWorldViewProj = mFX->GetVariableByName("gWorldViewProj")->AsMatrix();
+	mTexTransform = mFX->GetVariableByName("gTexTransform")->AsMatrix();
+	mTech = mFX->GetTechniqueByName("TextureTech");
+	mTex = mFX->GetVariableByName("gDiffuseMap")->AsShaderResource();
+}
+
+TextureEffect::~TextureEffect()
+{
 }

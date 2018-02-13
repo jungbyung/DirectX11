@@ -42,6 +42,10 @@ HRESULT DirectX11::Init()
 	if (FAILED(mCube->Init(mDevice)))
 		return E_FAIL;
 
+	mTCube = new TextureCube;
+	if (FAILED(mTCube->Init(mDevice)))
+		return E_FAIL;
+
 	mCamera = new Camera;
 	mCamera->SetLens(0.25*XM_PI, (static_cast<float>(mClientWidth) / mClientHeight), 1.0f, 1000.0f);
 	mCamera->SetPosition(0, 0, 10);
@@ -57,6 +61,7 @@ VOID DirectX11::OnResize()
 VOID DirectX11::UpdateScene(float dt)
 {
 	mCube->Update();
+	mTCube->Update();
 	mCamera->Update();
 }
 
@@ -66,7 +71,8 @@ VOID DirectX11::DrawScene()
 	mImmediateContext->ClearRenderTargetView(mRenderTargetView, color);
 	mImmediateContext->ClearDepthStencilView(mDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-	mCube->Draw(mImmediateContext, mCamera->GetViewProj());
+	//	mCube->Draw(mImmediateContext, mCamera->GetViewProj());
+	mTCube->Draw(mImmediateContext, mCamera->GetViewProj());
 
 	mSwapChain->Present(0, 0);
 }

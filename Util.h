@@ -33,6 +33,7 @@ class LayoutDesc
 {
 public:
 	static const D3D11_INPUT_ELEMENT_DESC pc[2];
+	static const D3D11_INPUT_ELEMENT_DESC pt[2];
 };
 
 class Layout
@@ -44,4 +45,5 @@ public:
 	static VOID Init(ID3D11Device* pDevice);
 
 	static ID3D11InputLayout* mPC;
+	static ID3D11InputLayout* mPT;
 };

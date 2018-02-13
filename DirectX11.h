@@ -4,6 +4,7 @@
 #include "App.h"
 
 class Cube;
+class TextureCube;
 class Camera;
 
 class DirectX11 : public App
@@ -11,6 +12,8 @@ class DirectX11 : public App
 private:
 	Cube* mCube;
 	Camera* mCamera;
+
+	TextureCube* mTCube;
 public:
 	DirectX11(HINSTANCE hInstance);
 	~DirectX11();

@@ -16,9 +16,9 @@ protected:
 	Object* mParent;
 public:
 	Object();
-	~Object();
+	virtual ~Object();
 
-	void Update();
+	virtual void Update();
 
 	void SetPosition(float x, float y, float z);
 	void SetPosition(const XMFLOAT3& pos);

@@ -75,7 +75,7 @@ VOID Cube::Update()
 	Object::Update();
 }
 
-void Cube::Draw(ID3D11DeviceContext *dc, CXMMATRIX ViewProj)
+VOID Cube::Draw(ID3D11DeviceContext *dc, CXMMATRIX ViewProj)
 {
 	dc->IASetInputLayout(Layout::mPC);
 	dc->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP);
@@ -91,6 +91,136 @@ void Cube::Draw(ID3D11DeviceContext *dc, CXMMATRIX ViewProj)
 	XMMATRIX M = XMMatrixMultiply(mWorld, ViewProj);
 
 	Effects::PointEffectFX->SetWroldViewProj(M);
+
+	dc->IASetVertexBuffers(0, 1, &mVB, &stride, &offset);
+	dc->IASetIndexBuffer(mIB, DXGI_FORMAT_R32_UINT, 0);
+
+	for (UINT p = 0; p < techDesc.Passes; p++)
+	{
+		activeTech->GetPassByIndex(p)->Apply(0, dc);
+		dc->DrawIndexed(36, 0, 0);
+	}
+}
+
+TextureCube::TextureCube()
+{
+}
+
+TextureCube::~TextureCube()
+{
+	ReleaseCOM(mVB);
+	ReleaseCOM(mIB);
+}
+
+HRESULT TextureCube::Init(ID3D11Device * pDevice)
+{
+	TexMetadata tmData;
+	ScratchImage img;
+	LoadFromDDSFile(L"resource/texture/WoodCrate01.dds", 0, &tmData, img);
+	CreateShaderResourceView(pDevice, img.GetImages(), img.GetImageCount(), tmData, &mTexture);
+
+	float r = 0.5f;
+
+	PT v[] =
+	{
+		{XMFLOAT3(-r, -r, -r), XMFLOAT2(0.0f, 1.0f)},
+		{XMFLOAT3(-r, +r, -r), XMFLOAT2(0.0f, 0.0f)},
+		{XMFLOAT3(+r, +r, -r), XMFLOAT2(1.0f, 0.0f)},
+		{XMFLOAT3(+r, -r, -r), XMFLOAT2(1.0f, 1.0f)},
+
+		{XMFLOAT3(-r, -r, +r), XMFLOAT2(1.0f, 1.0f)},
+		{XMFLOAT3(+r, -r, +r), XMFLOAT2(0.0f, 1.0f)},
+		{XMFLOAT3(+r, +r, +r), XMFLOAT2(0.0f, 0.0f)},
+		{XMFLOAT3(-r, +r, +r), XMFLOAT2(1.0f, 0.0f)},
+
+		{XMFLOAT3(-r, +r, -r), XMFLOAT2(0.0f, 1.0f)},
+		{XMFLOAT3(-r, +r, +r), XMFLOAT2(0.0f, 0.0f)},
+		{XMFLOAT3(+r, +r, +r), XMFLOAT2(1.0f, 0.0f)},
+		{XMFLOAT3(+r, +r, -r), XMFLOAT2(1.0f, 1.0f)},
+
+		{XMFLOAT3(-r, -r, -r), XMFLOAT2(1.0f, 1.0f)},
+		{XMFLOAT3(+r, -r, -r), XMFLOAT2(0.0f, 1.0f)},
+		{XMFLOAT3(+r, -r, +r), XMFLOAT2(0.0f, 0.0f)},
+		{XMFLOAT3(-r, -r, +r), XMFLOAT2(1.0f, 0.0f)},
+
+		{XMFLOAT3(-r, -r, +r), XMFLOAT2(0.0f, 1.0f)},
+		{XMFLOAT3(-r, +r, +r), XMFLOAT2(0.0f, 0.0f)},
+		{XMFLOAT3(-r, +r, -r), XMFLOAT2(1.0f, 0.0f)},
+		{XMFLOAT3(-r, -r, -r), XMFLOAT2(1.0f, 1.0f)},
+
+		{XMFLOAT3(+r, -r, -r), XMFLOAT2(0.0f, 1.0f)},
+		{XMFLOAT3(+r, +r, -r), XMFLOAT2(0.0f, 0.0f)},
+		{XMFLOAT3(+r, +r, +r), XMFLOAT2(1.0f, 0.0f)},
+		{XMFLOAT3(+r, -r, +r), XMFLOAT2(1.0f, 1.0f)}
+	};
+
+	D3D11_BUFFER_DESC vbd;
+	vbd.Usage = D3D11_USAGE_IMMUTABLE;
+	vbd.ByteWidth = sizeof(PT) * 24;
+	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	vbd.CPUAccessFlags = 0;
+	vbd.MiscFlags = 0;
+	D3D11_SUBRESOURCE_DATA vinitData;
+	vinitData.pSysMem = v;
+
+	pDevice->CreateBuffer(&vbd, &vinitData, &mVB);
+
+	UINT i[36];
+
+	i[0] = 0; i[1] = 1; i[2] = 2;
+	i[3] = 0; i[4] = 2; i[5] = 3;
+
+	i[6] = 4; i[7] = 5; i[8] = 6;
+	i[9] = 4; i[10] = 6; i[11] = 7;
+
+	i[12] = 8; i[13] = 9; i[14] = 10;
+	i[15] = 8; i[16] = 10; i[17] = 11;
+
+	i[18] = 12; i[19] = 13; i[20] = 14;
+	i[21] = 12; i[22] = 14; i[23] = 15;
+
+	i[24] = 16; i[25] = 17; i[26] = 18;
+	i[27] = 16; i[28] = 18; i[29] = 19;
+
+	i[30] = 20; i[31] = 21; i[32] = 22;
+	i[33] = 20; i[34] = 22; i[35] = 23;
+
+	D3D11_BUFFER_DESC ibd;
+	ibd.Usage = D3D11_USAGE_IMMUTABLE;
+	ibd.ByteWidth = sizeof(UINT) * 36;
+	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	ibd.CPUAccessFlags = 0;
+	ibd.MiscFlags = 0;
+	D3D11_SUBRESOURCE_DATA iinitData;
+	iinitData.pSysMem = i;
+	pDevice->CreateBuffer(&ibd, &iinitData, &mIB);
+
+	return S_OK;
+}
+
+VOID TextureCube::Update()
+{
+	Object::Update();
+}
+
+VOID TextureCube::Draw(ID3D11DeviceContext * dc, CXMMATRIX ViewProj)
+{
+	dc->IASetInputLayout(Layout::mPT);
+	dc->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	LPD3D11EFFECTTECHNIQUE activeTech = Effects::TextureEffectFX->mTech;
+
+	UINT stride = sizeof(PT);
+	UINT offset = 0;
+
+	D3DX11_TECHNIQUE_DESC techDesc;
+	activeTech->GetDesc(&techDesc);
+
+	XMMATRIX M = XMMatrixMultiply(mWorld, ViewProj);
+
+	Effects::TextureEffectFX->SetWroldViewProj(M);
+	Effects::TextureEffectFX->SetTexture(mTexture);
+	Effects::TextureEffectFX->SetTexTransform(XMMatrixIdentity());
 
 	dc->IASetVertexBuffers(0, 1, &mVB, &stride, &offset);
 	dc->IASetIndexBuffer(mIB, DXGI_FORMAT_R32_UINT, 0);
