@@ -70,7 +70,7 @@ HRESULT Cube::Init(ID3D11Device * pDevice)
 	return S_OK;
 }
 
-VOID Cube::Update()
+VOID Cube::Update(float delta)
 {
 	Object::Update();
 }
@@ -198,9 +198,10 @@ HRESULT TextureCube::Init(ID3D11Device * pDevice)
 	return S_OK;
 }
 
-VOID TextureCube::Update()
+VOID TextureCube::Update(float delta)
 {
 	Object::Update();
+	Object::Moving(delta);
 }
 
 VOID TextureCube::Draw(ID3D11DeviceContext * dc, CXMMATRIX ViewProj)

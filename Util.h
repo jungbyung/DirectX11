@@ -2,6 +2,11 @@
 
 namespace JB
 {
+	struct PC
+	{
+		XMFLOAT3 pos;
+		XMFLOAT4 color;
+	};
 	//struct Vertex
 	//{
 	//	XMFLOAT3 mPos;
@@ -20,6 +25,8 @@ namespace JB
 	//	XMFLOAT4 mSpecular;
 	//	XMFLOAT4 mReflect;
 	//};
+
+	HRESULT Line(ID3D11Device* pDevice, ID3D11DeviceContext* dc, XMFLOAT3 x1, XMFLOAT3 x2, XMFLOAT4 color, CXMMATRIX ViewProj);
 };
 
 class Util

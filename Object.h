@@ -43,6 +43,8 @@ public:
 
 	VOID MouseMove(POINT pt);
 
+	VOID Moving(float delta = 0.0f);
+
 	XMFLOAT3 GetPosition() { return mPosition; }
 	XMFLOAT3 GetForward() { return mForward; }
 	XMFLOAT3 GetScale() { return mScale; }

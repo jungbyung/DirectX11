@@ -36,6 +36,7 @@ build/
 ipch/
 debug/
 
+*.suo
 *.db
 *.vc.db
 *.vc.opendb

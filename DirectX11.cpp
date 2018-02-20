@@ -61,7 +61,7 @@ VOID DirectX11::OnResize()
 VOID DirectX11::UpdateScene(float dt)
 {
 	mCube->Update();
-	mTCube->Update();
+	mTCube->Update(dt);
 	mCamera->Update();
 }
 
@@ -71,6 +71,7 @@ VOID DirectX11::DrawScene()
 	mImmediateContext->ClearRenderTargetView(mRenderTargetView, color);
 	mImmediateContext->ClearDepthStencilView(mDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
+	Line(mDevice, mImmediateContext, XMFLOAT3(-2, 0, 0), XMFLOAT3(2, 0, 0), XMFLOAT4(1, 1, 1, 1), mCamera->GetViewProj());
 	//	mCube->Draw(mImmediateContext, mCamera->GetViewProj());
 	mTCube->Draw(mImmediateContext, mCamera->GetViewProj());
 

@@ -18,7 +18,7 @@ public:
 	~Cube();
 
 	HRESULT Init(ID3D11Device* pDevice);
-	VOID Update();
+	VOID Update(float delta = 0.0f);
 	VOID Draw(ID3D11DeviceContext* dc, CXMMATRIX ViewProj);
 };
 
@@ -40,6 +40,6 @@ public:
 	~TextureCube();
 
 	HRESULT Init(ID3D11Device* pDevice);
-	VOID Update();
+	VOID Update(float delta = 0.0f);
 	VOID Draw(ID3D11DeviceContext* dc, CXMMATRIX ViewProj);
 };

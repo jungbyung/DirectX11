@@ -13,7 +13,7 @@ struct VertexIn
 
 struct VertexOut
 {
-	float4 Pos : POSITION;
+	float4 Pos : SV_POSITION;
 	float2 Tex : TEXCOORD;
 };
 
@@ -30,7 +30,7 @@ VertexOut VS(VertexIn vin)
 
 	vout.Pos = mul(float4(vin.Pos, 1.0f), gWorldViewProj);
 	//vout.Tex = mul(float4(vin.Tex, 0.0f, 1.0f), gTexTransform).xy;
-	vout.Tex = float2(0, 0);
+	vout.Tex = vin.Tex;
 	return vout;
 }
 

@@ -195,3 +195,24 @@ VOID Object::MouseMove(POINT pt)
 	//Pitch(dy);
 	RotationY(dx);
 }
+
+VOID Object::Moving(float delta)
+{
+	if (GetAsyncKeyState('W') & 0x8000)
+		Walk(delta);
+	if (GetAsyncKeyState('S') & 0x8000)
+		Walk(-delta);
+	if (GetAsyncKeyState('A') & 0x8000)
+		Strafe(delta);
+	if (GetAsyncKeyState('D') & 0x8000)
+		Strafe(-delta);
+
+	if (GetAsyncKeyState(VK_LEFT) & 0x8000)
+		RotationY(-delta);
+	if (GetAsyncKeyState(VK_RIGHT) & 0x8000)
+		RotationY(delta);
+	if (GetAsyncKeyState(VK_UP) & 0x8000)
+		Pitch(delta);
+	if (GetAsyncKeyState(VK_DOWN) & 0x8000)
+		Pitch(-delta);
+}
