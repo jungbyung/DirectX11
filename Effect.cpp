@@ -36,11 +36,13 @@ PointEffect::~PointEffect()
 
 PointEffect*			Effects::PointEffectFX = nullptr;
 TextureEffect*			Effects::TextureEffectFX = nullptr;
+BasicEffect*			Effects::BasicEffectFX = nullptr;
 
 VOID Effects::Init(ID3D11Device * pDevice)
 {
 	PointEffectFX = new PointEffect(pDevice, "fx/PointColor.fxo");
 	TextureEffectFX = new TextureEffect(pDevice, "fx/Texture.fxo");
+	BasicEffectFX = new BasicEffect(pDevice, "fx/Basic.fxo");
 }
 
 TextureEffect::TextureEffect(ID3D11Device * pDevice, const char * fileName)
@@ -53,5 +55,17 @@ TextureEffect::TextureEffect(ID3D11Device * pDevice, const char * fileName)
 }
 
 TextureEffect::~TextureEffect()
+{
+}
+
+BasicEffect::BasicEffect(ID3D11Device * pDevice, const char* fileName)
+	: Effect(pDevice, fileName)
+{
+	mWorldViewProj = mFX->GetVariableByName("gWorldViewProj")->AsMatrix();
+	mTech = mFX->GetTechniqueByName("BasicTech");
+	mDiffuse = mFX->GetVariableByName("gDiffuseMap")->AsShaderResource();
+}
+
+BasicEffect::~BasicEffect()
 {
 }

@@ -170,6 +170,7 @@
     <ClInclude Include="DirectXTex.h" />
     <ClInclude Include="Effect.h" />
     <ClInclude Include="FBXLoader.h" />
+    <ClInclude Include="Grid.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="Resource.h" />
@@ -185,6 +186,7 @@
     <ClCompile Include="DirectX11.cpp" />
     <ClCompile Include="Effect.cpp" />
     <ClCompile Include="FBXLoader.cpp" />
+    <ClCompile Include="Grid.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -211,6 +213,8 @@
     <Library Include="Effects11d.lib" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="FX\Basic.fx" />
+    <FxCompile Include="FX\Light.fx" />
     <FxCompile Include="FX\PointColor.fx">
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(RelativeDir)\%(Filename).fxo</ObjectFileOutput>
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RelativeDir)%(Filename).fxo</ObjectFileOutput>

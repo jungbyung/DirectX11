@@ -9,9 +9,136 @@ Cube::~Cube()
 {
 	ReleaseCOM(mVB);
 	ReleaseCOM(mIB);
+	ReleaseCOM(mDiffuse);
 }
 
 HRESULT Cube::Init(ID3D11Device * pDevice)
+{
+	TexMetadata tmData;
+	ScratchImage img;
+	LoadFromDDSFile(L"resource/texture/WoodCrate01.dds", 0, &tmData, img);
+	CreateShaderResourceView(pDevice, img.GetImages(), img.GetImageCount(), tmData, &mDiffuse);
+
+	float r = 0.5f;
+
+	PNT v[] =
+	{
+		{ XMFLOAT3(-r, -r, -r), XMFLOAT3(0,0,-1), XMFLOAT2(0.0f, 1.0f) },
+		{ XMFLOAT3(-r, +r, -r), XMFLOAT3(0,0,-1), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(+r, +r, -r), XMFLOAT3(0,0,-1), XMFLOAT2(1.0f, 0.0f) },
+		{ XMFLOAT3(+r, -r, -r), XMFLOAT3(0,0,-1), XMFLOAT2(1.0f, 1.0f) },
+
+		{ XMFLOAT3(-r, -r, +r), XMFLOAT3(0,0,1), XMFLOAT2(1.0f, 1.0f) },
+		{ XMFLOAT3(+r, -r, +r), XMFLOAT3(0,0,1), XMFLOAT2(0.0f, 1.0f) },
+		{ XMFLOAT3(+r, +r, +r), XMFLOAT3(0,0,1), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(-r, +r, +r), XMFLOAT3(0,0,1), XMFLOAT2(1.0f, 0.0f) },
+
+		{ XMFLOAT3(-r, +r, -r), XMFLOAT3(0,1,0), XMFLOAT2(0.0f, 1.0f) },
+		{ XMFLOAT3(-r, +r, +r), XMFLOAT3(0,1,0), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(+r, +r, +r), XMFLOAT3(0,1,0), XMFLOAT2(1.0f, 0.0f) },
+		{ XMFLOAT3(+r, +r, -r), XMFLOAT3(0,1,0), XMFLOAT2(1.0f, 1.0f) },
+
+		{ XMFLOAT3(-r, -r, -r), XMFLOAT3(0,-1,0), XMFLOAT2(1.0f, 1.0f) },
+		{ XMFLOAT3(+r, -r, -r), XMFLOAT3(0,-1,0), XMFLOAT2(0.0f, 1.0f) },
+		{ XMFLOAT3(+r, -r, +r), XMFLOAT3(0,-1,0), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(-r, -r, +r), XMFLOAT3(0,-1,0), XMFLOAT2(1.0f, 0.0f) },
+
+		{ XMFLOAT3(-r, -r, +r), XMFLOAT3(-1,0,0), XMFLOAT2(0.0f, 1.0f) },
+		{ XMFLOAT3(-r, +r, +r), XMFLOAT3(-1,0,0), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(-r, +r, -r), XMFLOAT3(-1,0,0), XMFLOAT2(1.0f, 0.0f) },
+		{ XMFLOAT3(-r, -r, -r), XMFLOAT3(-1,0,0), XMFLOAT2(1.0f, 1.0f) },
+
+		{ XMFLOAT3(+r, -r, -r), XMFLOAT3(1,0,0), XMFLOAT2(0.0f, 1.0f) },
+		{ XMFLOAT3(+r, +r, -r), XMFLOAT3(1,0,0), XMFLOAT2(0.0f, 0.0f) },
+		{ XMFLOAT3(+r, +r, +r), XMFLOAT3(1,0,0), XMFLOAT2(1.0f, 0.0f) },
+		{ XMFLOAT3(+r, -r, +r), XMFLOAT3(1,0,0), XMFLOAT2(1.0f, 1.0f) }
+	};
+
+	D3D11_BUFFER_DESC vbd;
+	vbd.Usage = D3D11_USAGE_IMMUTABLE;
+	vbd.ByteWidth = sizeof(PNT) * 24;
+	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	vbd.CPUAccessFlags = 0;
+	vbd.MiscFlags = 0;
+	D3D11_SUBRESOURCE_DATA vinitData;
+	vinitData.pSysMem = v;
+
+	pDevice->CreateBuffer(&vbd, &vinitData, &mVB);
+
+	UINT i[] =
+	{
+		0, 1, 2,
+		0, 2, 3,
+		4, 5, 6,
+		4, 6, 7,
+		8, 9, 10,
+		8, 10, 11,
+		12, 13, 14,
+		12, 14, 15,
+		16, 17, 18,
+		16, 18, 19,
+		20, 21, 22,
+		20, 22, 23
+	};
+
+	D3D11_BUFFER_DESC ibd;
+	ibd.Usage = D3D11_USAGE_IMMUTABLE;
+	ibd.ByteWidth = sizeof(UINT) * 36;
+	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	ibd.CPUAccessFlags = 0;
+	ibd.MiscFlags = 0;
+	D3D11_SUBRESOURCE_DATA iinitData;
+	iinitData.pSysMem = i;
+	pDevice->CreateBuffer(&ibd, &iinitData, &mIB);
+
+	return S_OK;
+}
+
+VOID Cube::Update(float delta)
+{
+	Object::Update();
+	Object::Moving(delta);
+}
+
+VOID Cube::Draw(ID3D11DeviceContext * dc, CXMMATRIX ViewProj)
+{
+	dc->IASetInputLayout(Layout::mPNT);
+	dc->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	LPD3D11EFFECTTECHNIQUE activeTech = Effects::BasicEffectFX->mTech;
+
+	UINT stride = sizeof(PNT);
+	UINT offset = 0;
+
+	D3DX11_TECHNIQUE_DESC techDesc;
+	activeTech->GetDesc(&techDesc);
+
+	XMMATRIX M = XMMatrixMultiply(mWorld, ViewProj);
+
+	Effects::BasicEffectFX->SetWorldViewProj(M);
+	Effects::BasicEffectFX->SetDiffuse(mDiffuse);
+
+	dc->IASetVertexBuffers(0, 1, &mVB, &stride, &offset);
+	dc->IASetIndexBuffer(mIB, DXGI_FORMAT_R32_UINT, 0);
+
+	for (UINT p = 0; p < techDesc.Passes; p++)
+	{
+		activeTech->GetPassByIndex(p)->Apply(0, dc);
+		dc->DrawIndexed(36, 0, 0);
+	}
+}
+
+ColorCube::ColorCube()
+{
+}
+
+ColorCube::~ColorCube()
+{
+	ReleaseCOM(mVB);
+	ReleaseCOM(mIB);
+}
+
+HRESULT ColorCube::Init(ID3D11Device * pDevice)
 {
 	PC v[8];
 
@@ -70,12 +197,12 @@ HRESULT Cube::Init(ID3D11Device * pDevice)
 	return S_OK;
 }
 
-VOID Cube::Update(float delta)
+VOID ColorCube::Update(float delta)
 {
 	Object::Update();
 }
 
-VOID Cube::Draw(ID3D11DeviceContext *dc, CXMMATRIX ViewProj)
+VOID ColorCube::Draw(ID3D11DeviceContext *dc, CXMMATRIX ViewProj)
 {
 	dc->IASetInputLayout(Layout::mPC);
 	dc->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP);
@@ -90,7 +217,7 @@ VOID Cube::Draw(ID3D11DeviceContext *dc, CXMMATRIX ViewProj)
 
 	XMMATRIX M = XMMatrixMultiply(mWorld, ViewProj);
 
-	Effects::PointEffectFX->SetWroldViewProj(M);
+	Effects::PointEffectFX->SetWorldViewProj(M);
 
 	dc->IASetVertexBuffers(0, 1, &mVB, &stride, &offset);
 	dc->IASetIndexBuffer(mIB, DXGI_FORMAT_R32_UINT, 0);
@@ -219,9 +346,9 @@ VOID TextureCube::Draw(ID3D11DeviceContext * dc, CXMMATRIX ViewProj)
 
 	XMMATRIX M = XMMatrixMultiply(mWorld, ViewProj);
 
-	Effects::TextureEffectFX->SetWroldViewProj(M);
+	Effects::TextureEffectFX->SetWorldViewProj(M);
 	Effects::TextureEffectFX->SetTexture(mTexture);
-	Effects::TextureEffectFX->SetTexTransform(XMMatrixIdentity());
+	//Effects::BasicEffectFX->SetTexTransform(XMMatrixIdentity());
 
 	dc->IASetVertexBuffers(0, 1, &mVB, &stride, &offset);
 	dc->IASetIndexBuffer(mIB, DXGI_FORMAT_R32_UINT, 0);

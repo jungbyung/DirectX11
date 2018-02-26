@@ -7,6 +7,22 @@ private:
 	ID3D11Buffer* mVB;
 	ID3D11Buffer* mIB;
 
+	ID3D11ShaderResourceView* mDiffuse;
+public:
+	Cube();
+	~Cube();
+
+	HRESULT Init(ID3D11Device* pDevice);
+	VOID Update(float delta = 0.0f);
+	VOID Draw(ID3D11DeviceContext* dc, CXMMATRIX ViewProj);
+};
+
+class ColorCube : public Object
+{
+private:
+	ID3D11Buffer* mVB;
+	ID3D11Buffer* mIB;
+
 	struct PC
 	{
 		XMFLOAT3 pos;
@@ -14,8 +30,8 @@ private:
 	};
 	//ID3D11ShaderResourceView*
 public:
-	Cube();
-	~Cube();
+	ColorCube();
+	~ColorCube();
 
 	HRESULT Init(ID3D11Device* pDevice);
 	VOID Update(float delta = 0.0f);

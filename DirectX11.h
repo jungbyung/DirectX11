@@ -6,10 +6,12 @@
 class Cube;
 class TextureCube;
 class Camera;
+class Grid;
 
 class DirectX11 : public App
 {
 private:
+	Grid* mGrid;
 	Cube* mCube;
 	Camera* mCamera;
 

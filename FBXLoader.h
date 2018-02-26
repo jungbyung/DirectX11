@@ -3,15 +3,6 @@
 
 class Mesh;
 
-struct Material
-{
-	Material() { ZeroMemory(this, sizeof(this)); }
-
-	XMFLOAT4 mAmbient;
-	XMFLOAT4 mDiffuse;
-	XMFLOAT4 mSpecular;
-	XMFLOAT4 mReflect;
-};
 struct KeyFrame
 {
 	UINT mFrameNum;

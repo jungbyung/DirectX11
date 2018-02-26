@@ -203,9 +203,9 @@ VOID Object::Moving(float delta)
 	if (GetAsyncKeyState('S') & 0x8000)
 		Walk(-delta);
 	if (GetAsyncKeyState('A') & 0x8000)
-		Strafe(delta);
-	if (GetAsyncKeyState('D') & 0x8000)
 		Strafe(-delta);
+	if (GetAsyncKeyState('D') & 0x8000)
+		Strafe(delta);
 
 	if (GetAsyncKeyState(VK_LEFT) & 0x8000)
 		RotationY(-delta);

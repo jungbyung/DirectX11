@@ -66,13 +66,13 @@ private:
 	ID3D11ShaderResourceView* mSpecularMapSRV;
 	ID3D11ShaderResourceView* mNormalMapSRV;
 
-	//vector<Vertex> mVertices;
+	vector<Vertex> mVertices;
 	vector<UINT> mIndices;
 	string mDiffuseTextureName;
 	string mSpecularTextureName;
 	string mNormalTextureName;
 
-	//Material mMaterial;
+	Material mMaterial;
 };
 
 class Mesh : public Object

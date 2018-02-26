@@ -16,12 +16,19 @@ const D3D11_INPUT_ELEMENT_DESC LayoutDesc::pc[] =
 };
 const D3D11_INPUT_ELEMENT_DESC LayoutDesc::pt[] =
 {
-	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0}
+	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+};
+const D3D11_INPUT_ELEMENT_DESC LayoutDesc::pnt[] =
+{
+	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 };
 
 ID3D11InputLayout* Layout::mPC = nullptr;
 ID3D11InputLayout* Layout::mPT = nullptr;
+ID3D11InputLayout* Layout::mPNT = nullptr;
 
 Layout::Layout()
 {
@@ -31,13 +38,18 @@ Layout::~Layout()
 {
 	ReleaseCOM(mPC);
 	ReleaseCOM(mPT);
+	ReleaseCOM(mPNT);
 }
 
 VOID Layout::Init(ID3D11Device * pDevice)
 {
 	D3DX11_PASS_DESC passDesc;
+
 	Effects::PointEffectFX->mTech->GetPassByIndex(0)->GetDesc(&passDesc);
 	pDevice->CreateInputLayout(LayoutDesc::pc, 2, passDesc.pIAInputSignature, passDesc.IAInputSignatureSize, &mPC);
+
+	Effects::BasicEffectFX->mTech->GetPassByIndex(0)->GetDesc(&passDesc);
+	pDevice->CreateInputLayout(LayoutDesc::pnt, 3, passDesc.pIAInputSignature, passDesc.IAInputSignatureSize, &mPNT);
 
 	Effects::TextureEffectFX->mTech->GetPassByIndex(0)->GetDesc(&passDesc);
 	pDevice->CreateInputLayout(LayoutDesc::pt, 2, passDesc.pIAInputSignature, passDesc.IAInputSignatureSize, &mPT);
@@ -93,7 +105,7 @@ HRESULT JB::Line(ID3D11Device * pDevice, ID3D11DeviceContext * dc, XMFLOAT3 x1, 
 
 	XMMATRIX M = ViewProj;
 
-	Effects::PointEffectFX->SetWroldViewProj(M);
+	Effects::PointEffectFX->SetWorldViewProj(M);
 
 	dc->IASetVertexBuffers(0, 1, &mVB, &stride, &offset);
 	dc->IASetIndexBuffer(mIB, DXGI_FORMAT_R32_UINT, 0);

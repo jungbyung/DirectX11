@@ -22,7 +22,7 @@ public:
 
 	ID3DX11EffectMatrixVariable* mWorldViewProj;
 
-	VOID SetWroldViewProj(CXMMATRIX M) { mWorldViewProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
+	VOID SetWorldViewProj(CXMMATRIX M) { mWorldViewProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
 };
 
 class TextureEffect : public Effect
@@ -38,8 +38,22 @@ public:
 	ID3DX11EffectMatrixVariable* mTexTransform;
 
 	VOID SetTexTransform(CXMMATRIX M) { mTexTransform->SetMatrix(reinterpret_cast<const float*>(&M)); }
-	VOID SetWroldViewProj(CXMMATRIX M) { mWorldViewProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
+	VOID SetWorldViewProj(CXMMATRIX M) { mWorldViewProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
 	VOID SetTexture(ID3D11ShaderResourceView* tex) { mTex->SetResource(tex); }
+};
+
+class BasicEffect : public Effect
+{
+public:
+	BasicEffect(ID3D11Device * pDevice, const char* fileName);
+	~BasicEffect();
+
+	ID3DX11EffectTechnique* mTech;
+	ID3DX11EffectMatrixVariable* mWorldViewProj;
+	ID3DX11EffectShaderResourceVariable* mDiffuse;
+
+	VOID SetWorldViewProj(CXMMATRIX M) { mWorldViewProj->SetMatrix(reinterpret_cast<const float*>(&M)); }
+	VOID SetDiffuse(ID3D11ShaderResourceView* diffuse) { mDiffuse->SetResource(diffuse); }
 };
 
 class Effects
@@ -49,4 +63,5 @@ public:
 
 	static PointEffect* PointEffectFX;
 	static TextureEffect* TextureEffectFX;
+	static BasicEffect* BasicEffectFX;
 };
