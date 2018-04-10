@@ -2,8 +2,12 @@
 
 cbuffer cbPerObject
 {
-	float4x4 gWorldViewProj;
+	float4x4 gWorld;
+	float4x4 gViewProj;
 	Material gMaterial;
+	DirectionLight gDirLight;
+
+	float3 gEyePos;
 };
 
 Texture2D gDiffuseMap;
@@ -26,13 +30,14 @@ struct VertexOut
 {
 	float4 Pos : SV_POSITION;
 	float3 Normal : NORMAL;
-	float2 Tex : TEXCOORD;
+	float2 Tex : TEXCOORD0;
+	float3 toEye : TEXCOORD1;
 };
 
 VertexOut VS(VertexIn vin)
 {
 	VertexOut vout;
-	vout.Pos = mul(float4(vin.Pos, 1.0f), gWorldViewProj);
+	vout.Pos = mul(float4(vin.Pos, 1.0f), gWorld);
 	vout.Normal = float3(0, 0, 0);
 	vout.Tex = vin.Tex;
 
@@ -40,6 +45,10 @@ VertexOut VS(VertexIn vin)
 }
 float4 PS(VertexOut pin) : SV_Target
 {
+	float3 toEye = gEyePos - pin.Pos;
+
+	toEye = normalize(toEye);
+
 	float4 color = gDiffuseMap.Sample(samLinear, pin.Tex);
 	//color = float4(1, 1, 1, 1);
 	return color;

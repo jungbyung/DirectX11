@@ -37,22 +37,23 @@ namespace JB
 	struct DirectionLight
 	{
 		DirectionLight() { ZeroMemory(this, sizeof(this)); }
-		XMFLOAT3 Direction;
-
 		XMFLOAT4 mAmbient;
 		XMFLOAT4 mDiffuse;
 		XMFLOAT4 mSpecular;
+
+		XMFLOAT3 Direction;
 	};
 
 	struct PointLight
 	{
 		PointLight() { ZeroMemory(this, sizeof(this)); }
-		float mRange;
-		XMFLOAT3 mPos;
 
 		XMFLOAT4 mAmbient;
 		XMFLOAT4 mDiffuse;
 		XMFLOAT4 mSpecular;
+
+		XMFLOAT3 mPos;
+		float mRange;
 	};
 
 	HRESULT Line(ID3D11Device* pDevice, ID3D11DeviceContext* dc, XMFLOAT3 x1, XMFLOAT3 x2, XMFLOAT4 color, CXMMATRIX ViewProj);

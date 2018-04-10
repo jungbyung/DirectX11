@@ -50,4 +50,5 @@ public:
 	void RotationY(float angle);
 
 	void Update();
+	VOID Moving(float delta);
 };

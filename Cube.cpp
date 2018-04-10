@@ -144,14 +144,14 @@ HRESULT ColorCube::Init(ID3D11Device * pDevice)
 
 	float r = 0.5f;
 
-	v[0] = { XMFLOAT3(-r, -r, -r), XMFLOAT4(0,1,0,1) };
+	v[0] = { XMFLOAT3(-r, -r, -r), XMFLOAT4(1,0,0,1) };
 	v[1] = { XMFLOAT3(-r, +r, -r), XMFLOAT4(0,1,0,1) };
-	v[2] = { XMFLOAT3(+r, +r, -r), XMFLOAT4(0,1,0,1) };
-	v[3] = { XMFLOAT3(+r, -r, -r), XMFLOAT4(0,1,0,1) };
-	v[4] = { XMFLOAT3(-r, -r, +r), XMFLOAT4(0,1,0,1) };
-	v[5] = { XMFLOAT3(-r, +r, +r), XMFLOAT4(0,1,0,1) };
-	v[6] = { XMFLOAT3(+r, +r, +r), XMFLOAT4(0,1,0,1) };
-	v[7] = { XMFLOAT3(+r, -r, +r), XMFLOAT4(0,1,0,1) };
+	v[2] = { XMFLOAT3(+r, +r, -r), XMFLOAT4(0,0,1,1) };
+	v[3] = { XMFLOAT3(+r, -r, -r), XMFLOAT4(1,1,0,1) };
+	v[4] = { XMFLOAT3(-r, -r, +r), XMFLOAT4(0,1,1,1) };
+	v[5] = { XMFLOAT3(-r, +r, +r), XMFLOAT4(1,0,1,1) };
+	v[6] = { XMFLOAT3(+r, +r, +r), XMFLOAT4(1,1,1,1) };
+	v[7] = { XMFLOAT3(+r, -r, +r), XMFLOAT4(0,0,0,1) };
 
 	D3D11_BUFFER_DESC vbd;
 	vbd.Usage = D3D11_USAGE_IMMUTABLE;
@@ -199,13 +199,14 @@ HRESULT ColorCube::Init(ID3D11Device * pDevice)
 
 VOID ColorCube::Update(float delta)
 {
+	Object::Moving(delta);
 	Object::Update();
 }
 
 VOID ColorCube::Draw(ID3D11DeviceContext *dc, CXMMATRIX ViewProj)
 {
 	dc->IASetInputLayout(Layout::mPC);
-	dc->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP);
+	dc->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	LPD3D11EFFECTTECHNIQUE activeTech = Effects::PointEffectFX->mTech;
 
@@ -237,6 +238,7 @@ TextureCube::~TextureCube()
 {
 	ReleaseCOM(mVB);
 	ReleaseCOM(mIB);
+	ReleaseCOM(mTexture);
 }
 
 HRESULT TextureCube::Init(ID3D11Device * pDevice)

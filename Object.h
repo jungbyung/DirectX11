@@ -14,6 +14,9 @@ protected:
 	XMMATRIX mWorld;
 
 	Object* mParent;
+	vector<Object*> mChilds;
+
+	Material mMaterial;
 public:
 	Object();
 	virtual ~Object();

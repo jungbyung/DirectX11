@@ -6,6 +6,7 @@
 class Cube;
 class TextureCube;
 class Camera;
+class ColorCube;
 class Grid;
 
 class DirectX11 : public App
@@ -16,6 +17,9 @@ private:
 	Camera* mCamera;
 
 	TextureCube* mTCube;
+	ColorCube* mCCube;
+
+	DirectionLight mDirLight;
 public:
 	DirectX11(HINSTANCE hInstance);
 	~DirectX11();
