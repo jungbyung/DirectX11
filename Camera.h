@@ -16,32 +16,26 @@ private:
 	float mNearWindowHeight;
 	float mFarWindowHeight;
 
-	XMMATRIX mView;
-	XMMATRIX mProj;
+	XMFLOAT4X4 mView;
+	XMFLOAT4X4 mProj;
 
-	XMMATRIX mWorld;
-	XMMATRIX mLocal;
+	XMFLOAT4X4 mWorld;
+	XMFLOAT4X4 mLocal;
 
 public:
 	Camera();
 	~Camera();
 
 	void SetLens(float fovY, float aspect, float zn, float zf);
-	void LookAt(FXMVECTOR pos, FXMVECTOR target, FXMVECTOR worldUp);
-	void LookAt(const XMFLOAT3& pos, const XMFLOAT3& target, const XMFLOAT3 up);
+	void LookAt(FXMVECTOR pos, FXMVECTOR target, FXMVECTOR worldUp = XMVectorSet(0, 1, 0, 1));
 
-	XMMATRIX GetView() const { return mView; }
-	XMMATRIX GetProj() const { return mProj; }
-	XMMATRIX GetViewProj() const { return XMMatrixMultiply(mView, mProj); }
+	const XMFLOAT4X4& GetView() { return mView; }
+	const XMFLOAT4X4& GetProj() { return mProj; }
 
-	XMVECTOR GetVectorPos()const { return XMLoadFloat3(&mPos); }
-	XMFLOAT3 GetFloat3Pos()const { return mPos; }
+	const XMFLOAT3& GetPosition() { return mPos; }
+	const XMFLOAT3& GetForward() { return mForward; }
 
-	XMVECTOR GetVectorForward() const { return XMLoadFloat3(&mForward); }
-	XMFLOAT3 GetFloat3Forward() const { return mForward; }
-
-	void SetPosition(float x, float y, float z);
-	void SetPosition(const XMFLOAT3& v);
+	void SetPosition(FXMVECTOR pos);
 
 	void Strafe(float d);
 	void Walk(float d);

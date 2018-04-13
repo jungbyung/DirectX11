@@ -113,7 +113,7 @@ VOID Cube::Draw(ID3D11DeviceContext * dc, CXMMATRIX ViewProj)
 	D3DX11_TECHNIQUE_DESC techDesc;
 	activeTech->GetDesc(&techDesc);
 
-	XMMATRIX M = XMMatrixMultiply(mWorld, ViewProj);
+	XMMATRIX M = XMMatrixMultiply(XMLoadFloat4x4(&mWorld), ViewProj);
 
 	Effects::BasicEffectFX->SetWorldViewProj(M);
 	Effects::BasicEffectFX->SetDiffuse(mDiffuse);
@@ -216,7 +216,7 @@ VOID ColorCube::Draw(ID3D11DeviceContext *dc, CXMMATRIX ViewProj)
 	D3DX11_TECHNIQUE_DESC techDesc;
 	activeTech->GetDesc(&techDesc);
 
-	XMMATRIX M = XMMatrixMultiply(mWorld, ViewProj);
+	XMMATRIX M = XMMatrixMultiply(XMLoadFloat4x4(&mWorld), ViewProj);
 
 	Effects::PointEffectFX->SetWorldViewProj(M);
 
@@ -346,7 +346,7 @@ VOID TextureCube::Draw(ID3D11DeviceContext * dc, CXMMATRIX ViewProj)
 	D3DX11_TECHNIQUE_DESC techDesc;
 	activeTech->GetDesc(&techDesc);
 
-	XMMATRIX M = XMMatrixMultiply(mWorld, ViewProj);
+	XMMATRIX M = XMMatrixMultiply(XMLoadFloat4x4(&mWorld), ViewProj);
 
 	Effects::TextureEffectFX->SetWorldViewProj(M);
 	Effects::TextureEffectFX->SetTexture(mTexture);

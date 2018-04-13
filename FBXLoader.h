@@ -6,7 +6,7 @@ class Mesh;
 struct KeyFrame
 {
 	UINT mFrameNum;
-	XMMATRIX mMat;
+	XMFLOAT4X4 mMat;
 	KeyFrame* next;
 	FLOAT mTime;
 
@@ -16,7 +16,7 @@ struct Joint
 {
 	string mName;
 	INT mParentIndex;
-	XMMATRIX mMat;
+	XMFLOAT4X4 mMat;
 	map<string, KeyFrame*> mMapAnimation;
 	map<string, int> mMapLength;
 	KeyFrame* mAnimation;
@@ -54,8 +54,6 @@ class FBXLoader
 private:
 	vector<VertexInfo> mVecPNT;
 
-	FbxManager* mFbxSdkManager;
-	FbxScene* mFbxScene;
 	Skeleton mSkeleton;
 	vector<string> mVecName;
 
@@ -63,6 +61,7 @@ private:
 
 	bool IsBoneAnimation;
 
+	static FbxManager* mFbxSdkManager;
 	Mesh* mMesh;
 public:
 	FBXLoader();
@@ -85,5 +84,5 @@ private:
 	VOID ReadTangent(FbxMesh* pMesh, UINT mPolygonIndex, UINT IndexNum, VertexInfo& pnt);
 
 public:
-	BOOL LoadFBX(const string fileName);
+	static BOOL LoadFBX(const string fileName);
 };

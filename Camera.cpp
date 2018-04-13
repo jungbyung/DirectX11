@@ -6,8 +6,9 @@ Camera::Camera()
 	, mRight(1, 0, 0)
 	, mForward(0, 0, -1)
 	, mUp(0, 1, 0)
-	, mWorld(XMMatrixIdentity())
 {
+	XMStoreFloat4x4(&mWorld, XMMatrixIdentity());
+	XMStoreFloat4x4(&mLocal, XMMatrixIdentity());
 }
 
 Camera::~Camera()
@@ -24,7 +25,7 @@ void Camera::SetLens(float fovY, float aspect, float zn, float zf)
 	mNearWindowHeight = 2.0f * mNearZ * tanf(0.5f * mFovY);
 	mFarWindowHeight = 2.0f * mFarZ * tanf(0.5f * mFovY);
 
-	mProj = XMMatrixPerspectiveFovLH(mFovY, mAspect, mNearZ, mFarZ);
+	XMStoreFloat4x4(&mProj, XMMatrixPerspectiveFovLH(mFovY, mAspect, mNearZ, mFarZ));
 }
 
 void Camera::LookAt(FXMVECTOR pos, FXMVECTOR target, FXMVECTOR worldUp)
@@ -39,23 +40,9 @@ void Camera::LookAt(FXMVECTOR pos, FXMVECTOR target, FXMVECTOR worldUp)
 	XMStoreFloat3(&mUp, U);
 }
 
-void Camera::LookAt(const XMFLOAT3 & pos, const XMFLOAT3 & target, const XMFLOAT3 up)
+void Camera::SetPosition(FXMVECTOR pos)
 {
-	XMVECTOR P = XMLoadFloat3(&pos);
-	XMVECTOR T = XMLoadFloat3(&target);
-	XMVECTOR U = XMLoadFloat3(&up);
-
-	LookAt(P, T, U);
-}
-
-void Camera::SetPosition(float x, float y, float z)
-{
-	mPos = XMFLOAT3(x, y, z);
-}
-
-void Camera::SetPosition(const XMFLOAT3 & v)
-{
-	mPos = v;
+	XMStoreFloat3(&mPos, pos);
 }
 
 void Camera::Strafe(float d)

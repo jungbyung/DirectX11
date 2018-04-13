@@ -8,10 +8,11 @@ public:
 	~Bone()
 	{
 		SafeDelete(mParent);
-		vector<Bone*>::iterator iter = mChilds.begin();
-		for (iter; iter != mChilds.end(); ++iter)
+		vector<Bone*>::iterator siter = mChilds.begin();
+		vector<Bone*>::iterator eiter = mChilds.end();
+		for (siter; siter != eiter; ++siter)
 		{
-			SafeDelete(*iter);
+			SafeDelete(*siter);
 		}
 	}
 
@@ -19,7 +20,7 @@ public:
 	{
 		mName = name;
 		mIndex = index;
-		mMat = mat;
+		XMStoreFloat4x4(&mMat, mat);
 		mParent = parent;
 	}
 
@@ -31,14 +32,14 @@ public:
 	}
 
 	Bone* GetParent() { return mParent; };
-	XMMATRIX GetMatrix() { return mMat; }
+	XMMATRIX& GetMatrix() { return XMLoadFloat4x4(&mMat); }
 	INT GetIndex() { return mIndex; }
 	string GetName() { return mName; }
 
 private:
 	string mName;
 	INT mIndex;
-	XMMATRIX mMat;
+	XMFLOAT4X4 mMat;
 
 	Bone* mParent;
 	vector<Bone*> mChilds;

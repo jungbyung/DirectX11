@@ -225,7 +225,7 @@ HRESULT App::InitDirect3D()
 	sd.OutputWindow = mhMainWnd;
 	sd.Windowed = true;
 	sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-	sd.Flags = 0;
+	sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
 	IDXGIDevice* dxgiDevice = NULL;
 	if (FAILED(mDevice->QueryInterface(__uuidof(IDXGIDevice), (VOID**)&dxgiDevice)))

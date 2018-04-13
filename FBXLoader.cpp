@@ -343,6 +343,7 @@ VOID FBXLoader::ReadTangent(FbxMesh * pMesh, UINT mPolygonIndex, UINT IndexNum, 
 		}
 	}
 }
+FbxManager* FBXLoader::mFbxSdkManager = nullptr;
 
 BOOL FBXLoader::LoadFBX(const string fileName)
 {
@@ -359,20 +360,20 @@ BOOL FBXLoader::LoadFBX(const string fileName)
 	}
 
 	FbxImporter* pImport = FbxImporter::Create(mFbxSdkManager, "");
-	mFbxScene = FbxScene::Create(mFbxSdkManager, "");
+	FbxScene *fbxScene = FbxScene::Create(mFbxSdkManager, "");
 
 	bool bSuccess = pImport->Initialize(fileName.c_str(), -1, mFbxSdkManager->GetIOSettings());
 	if (!bSuccess)
 		return false;
 
-	bSuccess = pImport->Import(mFbxScene);
+	bSuccess = pImport->Import(fbxScene);
 	if (!bSuccess)
 		return false;
 
 	pImport->Destroy();
 
-	printf("%s을 불러오고 있습니다\n", fileName);
-	ParseSkeletonHierarchy(mFbxScene->GetRootNode());
+	printf("%s을 불러오고 있습니다\n", fileName.c_str());
+	ParseSkeletonHierarchy(fbxScene->GetRootNode());
 
 	if (mSkeleton.mVecJoint.empty())
 	{
@@ -382,7 +383,7 @@ BOOL FBXLoader::LoadFBX(const string fileName)
 	else
 		IsBoneAnimation = true;
 
-	ParseNode(mFbxScene->GetRootNode());
+	ParseNode(fbxScene->GetRootNode());
 	fclose(fp);
 
 	return true;

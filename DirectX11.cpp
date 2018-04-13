@@ -8,6 +8,7 @@
 #include "Effect.h"
 #include "Util.h"
 #include "Grid.h"
+#include "FBXLoader.h"
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 	PSTR cmdLine, int showCmd)
@@ -55,18 +56,20 @@ HRESULT DirectX11::Init()
 
 	//mTCube->SetPosition(1, 0, 0);
 
+	if (FBXLoader::LoadFBX("aa"))
+		printf("true");
+
 	mDirLight.Direction = XMFLOAT3(0, 0, 1);
 
 	mDirLight.mAmbient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
 	mDirLight.mDiffuse = XMFLOAT4(1, 1, 1, 1.f);
-	mDirLight.mSpecular = XMFLOAT4(0.2, 0.2, 0.2, 1.f);
+	mDirLight.mSpecular = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.f);
 
 	mCamera = new Camera;
 	mCamera->SetLens(0.25*XM_PI, (static_cast<float>(mClientWidth) / mClientHeight), 1.0f, 1000.0f);
-	mCamera->SetPosition(0, 5, -10);
-	mCamera->LookAt(mCamera->GetFloat3Pos(), XMFLOAT3(0, 0, 0), XMFLOAT3(0, 1, 0));
-	printf("%f, %f, %f\n", mCamera->GetFloat3Pos().x, mCamera->GetFloat3Pos().y, mCamera->GetFloat3Pos().z);
-	printf("%f, %f, %f\n", mCamera->GetFloat3Forward().x, mCamera->GetFloat3Forward().y, mCamera->GetFloat3Forward().z);
+	mCamera->SetPosition(XMVectorSet(0, 5, -10, 0));
+	mCamera->LookAt(XMLoadFloat3(&mCamera->GetPosition()), XMLoadFloat3(&mCube->GetPosition()));
+
 	return S_OK;
 }
 
@@ -77,11 +80,18 @@ VOID DirectX11::OnResize()
 
 VOID DirectX11::UpdateScene(float dt)
 {
+	static bool s = false;
 	mCube->Update(dt);
 	mCCube->Update(dt);
 	//mTCube->Update(dt);
-	mCamera->LookAt(mCamera->GetFloat3Pos(), mCube->GetPosition(), XMFLOAT3(0, 1, 0));
+	mCamera->LookAt(XMLoadFloat3(&mCamera->GetPosition()), XMLoadFloat3(&mCube->GetPosition()));
 	mCamera->Update();
+
+	if (GetAsyncKeyState(VK_F1) & 0x8001)
+	{
+		mSwapChain->SetFullscreenState(s, nullptr);
+		s = !s;
+	}
 }
 
 VOID DirectX11::DrawScene()
@@ -90,10 +100,12 @@ VOID DirectX11::DrawScene()
 	mImmediateContext->ClearRenderTargetView(mRenderTargetView, color);
 	mImmediateContext->ClearDepthStencilView(mDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-	mGrid->Draw(mImmediateContext, mCamera->GetViewProj());
+	XMMATRIX ViewProj = XMMatrixMultiply(XMLoadFloat4x4(&mCamera->GetView()), XMLoadFloat4x4(&mCamera->GetProj()));
+
+	mGrid->Draw(mImmediateContext, ViewProj);
 	//Line(mDevice, mImmediateContext, XMFLOAT3(-2, 0, 0), XMFLOAT3(2, 0, 0), XMFLOAT4(1, 1, 1, 1), mCamera->GetViewProj());
 	//mCube->Draw(mImmediateContext, mCamera->GetViewProj());
-	mCCube->Draw(mImmediateContext, mCamera->GetViewProj());
+	mCCube->Draw(mImmediateContext, ViewProj);
 	//mTCube->Draw(mImmediateContext, mCamera->GetViewProj());
 
 	mSwapChain->Present(0, 0);

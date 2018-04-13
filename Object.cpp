@@ -7,20 +7,26 @@ Object::Object()
 	, mForward(0, 0, 1)
 	, mUp(0, 1, 0)
 	, mRight(1, 0, 0)
-	, mLocal(XMMatrixIdentity())
-	, mWorld(XMMatrixIdentity())
 	, mParent(nullptr)
 {
+	XMStoreFloat4x4(&mLocal, XMMatrixIdentity());
+	XMStoreFloat4x4(&mWorld, XMMatrixIdentity());
 }
 
 Object::~Object()
 {
+	vector<Object*>::iterator siter = mChilds.begin();
+	vector<Object*>::iterator eiter = mChilds.end();
+	for (; siter != eiter; ++siter)
+	{
+		SafeDelete(*siter);
+	}
+	mChilds.clear();
+	SafeDelete(mParent);
 }
 
 void Object::Update()
 {
-	mLocal = XMMatrixIdentity();
-
 	XMVECTOR r = XMLoadFloat3(&mRight);
 	XMVECTOR u = XMLoadFloat3(&mUp);
 	XMVECTOR f = XMLoadFloat3(&mForward);
@@ -30,14 +36,14 @@ void Object::Update()
 	u = XMVectorMultiply(u, s);
 	f = XMVectorMultiply(f, s);
 
-	memcpy(&mLocal.r[0], &r, sizeof(XMFLOAT3));
-	memcpy(&mLocal.r[1], &u, sizeof(XMFLOAT3));
-	memcpy(&mLocal.r[2], &f, sizeof(XMFLOAT3));
-	memcpy(&mLocal.r[3], &mPosition, sizeof(XMFLOAT3));
+	memcpy(&mLocal.m[0], &r, sizeof(XMFLOAT3));
+	memcpy(&mLocal.m[1], &u, sizeof(XMFLOAT3));
+	memcpy(&mLocal.m[2], &f, sizeof(XMFLOAT3));
+	memcpy(&mLocal.m[3], &mPosition, sizeof(XMFLOAT3));
 
 	if (mParent)
 	{
-		mWorld = XMMatrixMultiply(mLocal, mParent->GetWorldMatrix());
+		XMStoreFloat4x4(&mWorld, XMMatrixMultiply(XMLoadFloat4x4(&mLocal), XMLoadFloat4x4(&mParent->GetWorldMatrix())));
 	}
 	else
 	{
@@ -45,17 +51,12 @@ void Object::Update()
 	}
 }
 
-void Object::SetPosition(float x, float y, float z)
+void Object::SetPosition(FXMVECTOR pos)
 {
-	mPosition = XMFLOAT3(x, y, z);
+	XMStoreFloat3(&mPosition, pos);
 }
 
-void Object::SetPosition(const XMFLOAT3 & pos)
-{
-	mPosition = pos;
-}
-
-void Object::MovePosition(float x, float y, float z)
+void Object::MovePosition(FXMVECTOR delta)
 {
 	XMVECTOR r = XMVector3Normalize(XMLoadFloat3(&mRight));
 	XMVECTOR u = XMVector3Normalize(XMLoadFloat3(&mUp));
@@ -65,93 +66,67 @@ void Object::MovePosition(float x, float y, float z)
 
 	XMVECTOR p = XMLoadFloat3(&mPosition);
 
-	m += r * x;
-	m += u * y;
-	m += f * z;
+	XMFLOAT3 d;
+	XMStoreFloat3(&d, delta);
+
+	m += r * d.x;
+	m += u * d.x;
+	m += f * d.x;
 
 	p += m;
 
 	XMStoreFloat3(&mPosition, p);
 }
 
-void Object::MovePosition(const XMFLOAT3 & delta)
+void Object::SetScale(FXMVECTOR scale)
 {
-	XMVECTOR r = XMVector3Normalize(XMLoadFloat3(&mRight));
-	XMVECTOR u = XMVector3Normalize(XMLoadFloat3(&mUp));
-	XMVECTOR f = XMVector3Normalize(XMLoadFloat3(&mForward));
-
-	XMVECTOR m = XMVectorSet(0, 0, 0, 0);
-
-	XMVECTOR p = XMLoadFloat3(&mPosition);
-
-	m += r * delta.x;
-	m += u * delta.y;
-	m += f * delta.z;
-
-	p += m;
-
-	XMStoreFloat3(&mPosition, p);
+	XMStoreFloat3(&mScale, scale);
 }
 
-void Object::SetScale(float x, float y, float z)
+void Object::SetRotation(FXMVECTOR rot)
 {
-	mScale = XMFLOAT3(x, y, z);
-}
+	XMFLOAT3 Rot;
 
-void Object::SetScale(const XMFLOAT3 & scale)
-{
-	mScale = scale;
-}
+	XMStoreFloat3(&Rot, rot);
 
-void Object::SetRotation(float x, float y, float z)
-{
-	XMMATRIX matX = XMMatrixRotationX(x);
-	XMMATRIX matY = XMMatrixRotationY(y);
-	XMMATRIX matZ = XMMatrixRotationZ(z);
+	XMMATRIX matX = XMMatrixRotationX(Rot.x);
+	XMMATRIX matY = XMMatrixRotationY(Rot.y);
+	XMMATRIX matZ = XMMatrixRotationZ(Rot.z);
 
-	XMMATRIX rot = matX * matY * matZ;
+	XMMATRIX XYZ = matX * matY * matZ;
 
 	XMVECTOR r = XMVector3Normalize(XMLoadFloat3(&mRight));
 	XMVECTOR u = XMVector3Normalize(XMLoadFloat3(&mUp));
 	XMVECTOR f = XMVector3Normalize(XMLoadFloat3(&mForward));
 
-	r = XMVector3TransformNormal(r, rot);
-	u = XMVector3TransformNormal(u, rot);
-	f = XMVector3TransformNormal(f, rot);
+	r = XMVector3TransformNormal(r, XYZ);
+	u = XMVector3TransformNormal(u, XYZ);
+	f = XMVector3TransformNormal(f, XYZ);
 
 	XMStoreFloat3(&mRight, r);
 	XMStoreFloat3(&mUp, u);
 	XMStoreFloat3(&mForward, f);
 }
 
-void Object::SetRotation(const XMFLOAT3 & rot)
+void Object::LookDirection(FXMVECTOR dir, FXMVECTOR up)
 {
-	SetRotation(rot.x, rot.y, rot.z);
-}
-
-void Object::LookDirection(const XMFLOAT3 & dir, const XMFLOAT3 & up)
-{
-	XMVECTOR newForward = XMLoadFloat3(&dir);
-	XMVECTOR newUp = XMLoadFloat3(&up);
+	XMVECTOR newUp;
 	XMVECTOR newRight;
-	newRight = XMVector3Normalize(XMVector3Cross(newUp, newForward));
+	newRight = XMVector3Normalize(XMVector3Cross(up, dir));
 
-	newUp = XMVector3Normalize(XMVector3Cross(newForward, newRight));
+	newUp = XMVector3Normalize(XMVector3Cross(dir, newRight));
 
-	XMStoreFloat3(&mForward, newForward);
+	XMStoreFloat3(&mForward, dir);
 	XMStoreFloat3(&mUp, newUp);
 	XMStoreFloat3(&mRight, newRight);
 }
 
-void Object::LookPosition(const XMFLOAT3 & pos, const XMFLOAT3 & up)
+void Object::LookPosition(FXMVECTOR pos, FXMVECTOR up)
 {
 	XMVECTOR p = XMLoadFloat3(&mPosition);
-	XMVECTOR dir = XMVector3Normalize(XMLoadFloat3(&pos) - p);
+	XMVECTOR dir = XMVector3Normalize(pos - p);
 
-	XMFLOAT3 d;
-
-	XMStoreFloat3(&d, dir);
-	LookDirection(d, up);
+	LookDirection(dir, up);
 }
 
 void Object::Walk(float delta)
