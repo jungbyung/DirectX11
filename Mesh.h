@@ -31,11 +31,14 @@ public:
 		return mChilds[index];
 	}
 
+	void AddChild(Bone* bone)
+	{
+		mChilds.push_back(bone);
+	}
 	Bone* GetParent() { return mParent; };
-	XMMATRIX& GetMatrix() { return XMLoadFloat4x4(&mMat); }
+	const XMFLOAT4X4& GetMatrix() { return mMat; }
 	INT GetIndex() { return mIndex; }
 	string GetName() { return mName; }
-
 private:
 	string mName;
 	INT mIndex;
@@ -57,6 +60,47 @@ public:
 		ReleaseCOM(mSpecularMapSRV);
 		ReleaseCOM(mNormalMapSRV);
 	}
+	vector<Vertex>& GetVertices() { return mVertices; }
+	vector<UINT>& GetIndices() { return mIndices; }
+
+	void SetMaterial(Material mat) { mMaterial = mat; }
+
+	void SetTextureName(const int n, const string str)
+	{
+		switch (n)
+		{
+		case 0:
+			mDiffuseTextureName = str;
+			break;
+		case 1:
+			mSpecularTextureName = str;
+			break;
+		case 2:
+			mNormalTextureName = str;
+			break;
+		}
+	}
+
+	ID3D11ShaderResourceView* GetMapSRV(int n)
+	{
+		switch (n)
+		{
+		case 0:
+			return mDiffuseMapSRV;
+			break;
+		case 1:
+			return mSpecularMapSRV;
+			break;
+		case 2:
+			return mNormalMapSRV;
+			break;
+		}
+		return nullptr;
+	}
+	Material GetMaterial() { return mMaterial; }
+	void Initialize(ID3D11Device * pDevice);
+	virtual void Update(const float deltaTime);
+	void Draw(ID3D11DeviceContext * dc);
 
 private:
 
@@ -82,9 +126,25 @@ public:
 	Mesh();
 	~Mesh();
 
-	virtual void Update();
-	virtual void Draw();
+	void Initialize(ID3D11Device * pDevice);
+	virtual void Update(const float deltaTime);
+	void Draw(ID3D11DeviceContext * dc, CXMMATRIX viewproj);
+
+	Bone* GetBone() { return mBone; }
+	void SetBone(Bone* bone) { mBone = bone; }
+
+	vector<Subset*>& GetSubset() { return mSubset; }
 private:
-	vector<Subset> mSubset;
+	vector<Subset*> mSubset;
 	Bone* mBone;
+};
+
+class StaticMesh : public Object
+{
+public:
+	StaticMesh();
+	~StaticMesh();
+
+private:
+	vector<Subset*> mSubsets;
 };

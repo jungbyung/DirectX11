@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "FBXLoader.h"
+#include "Mesh.h"
 
 FBXLoader::FBXLoader()
 {
@@ -9,71 +10,82 @@ FBXLoader::~FBXLoader()
 {
 }
 
-VOID FBXLoader::ParseSkeletonHierarchy(FbxNode * pNode)
+Bone* FBXLoader::ParseSkeletonHierarchy(FbxNode * pNode)
 {
+	Bone* bone = nullptr;
+	int n = pNode->GetChildCount();
 	for (int i = 0; i < pNode->GetChildCount(); ++i)
 	{
 		auto currNode = pNode->GetChild(i);
-		ParseSkeletonHierarchyRecursively(currNode, 0, 0, -1);
+		if (currNode->GetNodeAttribute()->GetAttributeType() != FbxNodeAttribute::eSkeleton) continue;
+		bone = new Bone();
+		ParseSkeletonHierarchyRecursively(currNode, 0, 0, -1, bone);
 	}
+	return bone;
 }
 
-VOID FBXLoader::ParseSkeletonHierarchyRecursively(FbxNode * pNode, int inDepth, int myIndex, int inParentIndex)
+VOID FBXLoader::ParseSkeletonHierarchyRecursively(FbxNode * pNode, int inDepth, int myIndex, int inParentIndex, Bone* bone, Bone* p)
 {
+	static int size = 0;
 	if (pNode->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eSkeleton)
 	{
-		Joint jt;
-		jt.mParentIndex = inParentIndex;
-		jt.mName = pNode->GetName();
-		mSkeleton.mVecJoint.push_back(jt);
+		bone->Initialize(pNode->GetName(), inParentIndex, XMMatrixIdentity(), p);
+		size++;
 	}
 	for (int i = 0; i < pNode->GetChildCount(); ++i)
 	{
-		ParseSkeletonHierarchyRecursively(pNode->GetChild(i), inDepth + 1, mSkeleton.mVecJoint.size(), myIndex);
+		Bone* b = new Bone();
+		ParseSkeletonHierarchyRecursively(pNode->GetChild(i), inDepth + 1, size, myIndex, b, bone);
+		bone->AddChild(b);
 	}
 }
 
-VOID FBXLoader::ParseNode(FbxNode * pNode)
+VOID FBXLoader::ParseNode(FbxNode * pNode, vector<Subset*>& subsets)
 {
 	if (pNode->GetMesh())
 	{
-		ParseControlPoint(pNode);
-		ParseVertexInfo(pNode);
-		ParseMaterial(pNode);
+		vector<JB::Vertex> vecPNT;
+		ParseControlPoint(pNode, vecPNT);
+		ParseVertexInfo(pNode, vecPNT, subsets);
+		ParseMaterial(pNode, subsets);
 	}
 	for (int i = 0; i < pNode->GetChildCount(); ++i)
 	{
-		ParseNode(pNode->GetChild(i));
+		ParseNode(pNode->GetChild(i), subsets);
 	}
 }
 
-VOID FBXLoader::ParseControlPoint(FbxNode * pNode)
+VOID FBXLoader::ParseControlPoint(FbxNode * pNode, vector<JB::Vertex>& ver)
 {
 	auto pMesh = pNode->GetMesh();
 
 	for (int i = 0; i < pMesh->GetControlPointsCount(); ++i)
 	{
-		VertexInfo pnt;
+		Vertex pnt;
 		pnt.mPos.x = static_cast<float>(pMesh->GetControlPointAt(i).mData[0]);
 		pnt.mPos.y = static_cast<float>(pMesh->GetControlPointAt(i).mData[1]);
 		pnt.mPos.z = static_cast<float>(pMesh->GetControlPointAt(i).mData[2]);
 
 		ZeroMemory(pnt.mIndices, sizeof(pnt.mIndices));
 		ZeroMemory(pnt.mWeight, sizeof(pnt.mWeight));
-		mVecPNT.push_back(pnt);
+		ver.push_back(pnt);
 	}
 }
 
-VOID FBXLoader::ParseVertexInfo(FbxNode * pNode)
+VOID FBXLoader::ParseVertexInfo(FbxNode * pNode, vector<JB::Vertex>& ver, vector<Subset*>& subsets)
 {
 	auto pMesh = pNode->GetMesh();
 	auto SubsetNum = pMesh->GetElementMaterial()->GetIndexArray().GetLast() + 1;
 	auto Subindex = new UINT[SubsetNum];
 	UINT TotalIndex = 0;
 
-	map<int, Subset> mapSubset;
+	map<int, Subset*> mapSubset;
 	ZeroMemory(Subindex, sizeof(UINT) * SubsetNum);
-
+	for (int i = 0; i < SubsetNum; i++)
+	{
+		mapSubset[i] = new Subset();
+		subsets.push_back(mapSubset[i]);
+	}
 	UINT SubsetIndexNum;
 	for (int i = 0; i < pMesh->GetPolygonCount(); ++i)
 	{
@@ -82,34 +94,31 @@ VOID FBXLoader::ParseVertexInfo(FbxNode * pNode)
 		for (int j = 0; j < pMesh->GetPolygonSize(i); ++j)
 		{
 			auto index = pMesh->GetPolygonVertex(i, j);
-			ReadNormal(pMesh, index, TotalIndex, mVecPNT[index]);
-			ReadUV(pMesh, index, pMesh->GetTextureUVIndex(i, j), mVecPNT[index]);
-			ReadTangent(pMesh, index, TotalIndex, mVecPNT[index]);
+			ReadNormal(pMesh, index, TotalIndex, ver[index]);
+			ReadUV(pMesh, index, pMesh->GetTextureUVIndex(i, j), ver[index]);
+			ReadTangent(pMesh, index, TotalIndex, ver[index]);
 			++TotalIndex;
 			indexArr[j] = index;
 		}
-		mapSubset[SubsetIndexNum].mVecVertices.push_back(mVecPNT[indexArr[0]]);
-		mapSubset[SubsetIndexNum].mVecVertices.push_back(mVecPNT[indexArr[2]]);
-		mapSubset[SubsetIndexNum].mVecVertices.push_back(mVecPNT[indexArr[1]]);
-		mapSubset[SubsetIndexNum].mVecIndices.push_back(Subindex[SubsetIndexNum]++);
-		mapSubset[SubsetIndexNum].mVecIndices.push_back(Subindex[SubsetIndexNum]++);
-		mapSubset[SubsetIndexNum].mVecIndices.push_back(Subindex[SubsetIndexNum]++);
+		mapSubset[SubsetIndexNum]->GetVertices().push_back(ver[indexArr[0]]);
+		mapSubset[SubsetIndexNum]->GetVertices().push_back(ver[indexArr[2]]);
+		mapSubset[SubsetIndexNum]->GetVertices().push_back(ver[indexArr[1]]);
+		mapSubset[SubsetIndexNum]->GetIndices().push_back(Subindex[SubsetIndexNum]++);
+		mapSubset[SubsetIndexNum]->GetIndices().push_back(Subindex[SubsetIndexNum]++);
+		mapSubset[SubsetIndexNum]->GetIndices().push_back(Subindex[SubsetIndexNum]++);
 	}
-	for (int i = 0; i < mapSubset.size(); ++i)
-	{
-		mMapSubset[i] = mapSubset[i];
-	}
-	mVecPNT.clear();
+
+	ver.clear();
 }
 
-VOID FBXLoader::ParseMaterial(FbxNode * pNode)
+VOID FBXLoader::ParseMaterial(FbxNode * pNode, vector<Subset*>& subsets)
 {
 	auto materialCount = pNode->GetMaterialCount();
 	for (int i = 0; i < materialCount; ++i)
 	{
 		auto surfaceMaterial = pNode->GetMaterial(i);
-		ParseMaterialAttribute(surfaceMaterial, i, &mMapSubset[mMapSubset.size() - materialCount + i]);
-		ParseMaterialTexture(surfaceMaterial, i, &mMapSubset[mMapSubset.size() - materialCount + i]);
+		ParseMaterialAttribute(surfaceMaterial, i, subsets[subsets.size() - materialCount + i]);
+		ParseMaterialTexture(surfaceMaterial, i, subsets[subsets.size() - materialCount + i]);
 	}
 }
 
@@ -143,7 +152,7 @@ void FBXLoader::ParseMaterialAttribute(FbxSurfaceMaterial * inMaterial, UINT ind
 	matl.mReflect.z = static_cast<float>(double3.mData[2]);
 	matl.mReflect.w = 1.0f;
 
-	inObj->mMaterial = matl;
+	inObj->SetMaterial(matl);
 }
 
 void FBXLoader::ParseMaterialTexture(FbxSurfaceMaterial * inMaterial, UINT index, Subset * inObj)
@@ -183,15 +192,15 @@ void FBXLoader::ParseMaterialTexture(FbxSurfaceMaterial * inMaterial, UINT index
 							//name = sPath + name;
 							if (textureType == "DiffuseColor")
 							{
-								inObj->mDiffuseTexture = fileTexture->GetFileName();
+								inObj->SetTextureName(0, fileTexture->GetFileName());
 							}
 							else if (textureType == "SpecularColor")
 							{
-								inObj->mSpecularTexture = fileTexture->GetFileName();
+								inObj->SetTextureName(1, fileTexture->GetFileName());
 							}
 							else if (textureType == "NormalMap")
 							{
-								inObj->mNormalTexture = fileTexture->GetFileName();
+								inObj->SetTextureName(2, fileTexture->GetFileName());
 							}
 						}
 					}
@@ -201,7 +210,7 @@ void FBXLoader::ParseMaterialTexture(FbxSurfaceMaterial * inMaterial, UINT index
 	}
 }
 
-VOID FBXLoader::ReadNormal(FbxMesh * pMesh, UINT mPolygonIndex, UINT IndexNum, VertexInfo & pnt)
+VOID FBXLoader::ReadNormal(FbxMesh * pMesh, UINT mPolygonIndex, UINT IndexNum, JB::Vertex & pnt)
 {
 	FbxGeometryElementNormal* pVertexNormal = pMesh->GetElementNormal(0);
 	switch (pVertexNormal->GetMappingMode())
@@ -249,7 +258,7 @@ VOID FBXLoader::ReadNormal(FbxMesh * pMesh, UINT mPolygonIndex, UINT IndexNum, V
 	}
 }
 
-VOID FBXLoader::ReadUV(FbxMesh * pMesh, UINT mPolygonIndex, UINT UVIndex, VertexInfo & pnt)
+VOID FBXLoader::ReadUV(FbxMesh * pMesh, UINT mPolygonIndex, UINT UVIndex, JB::Vertex & pnt)
 {
 	FbxGeometryElementUV* pVertexUV = pMesh->GetElementUV(0);
 
@@ -289,7 +298,7 @@ VOID FBXLoader::ReadUV(FbxMesh * pMesh, UINT mPolygonIndex, UINT UVIndex, Vertex
 	}
 }
 
-VOID FBXLoader::ReadTangent(FbxMesh * pMesh, UINT mPolygonIndex, UINT IndexNum, VertexInfo & pnt)
+VOID FBXLoader::ReadTangent(FbxMesh * pMesh, UINT mPolygonIndex, UINT IndexNum, JB::Vertex & pnt)
 {
 	FbxGeometryElementTangent* vertexTangent = pMesh->GetElementTangent(0);
 	if (!vertexTangent) return;
@@ -343,13 +352,13 @@ VOID FBXLoader::ReadTangent(FbxMesh * pMesh, UINT mPolygonIndex, UINT IndexNum, 
 		}
 	}
 }
-FbxManager* FBXLoader::mFbxSdkManager = nullptr;
 
-BOOL FBXLoader::LoadFBX(const string fileName)
+Mesh* FBXLoader::LoadFBX(const string fileName)
 {
 	FILE* fp;
 
 	fopen_s(&fp, fileName.c_str(), "r");
+	FbxManager* mFbxSdkManager;
 
 	mFbxSdkManager = nullptr;
 	if (!mFbxSdkManager)
@@ -364,18 +373,22 @@ BOOL FBXLoader::LoadFBX(const string fileName)
 
 	bool bSuccess = pImport->Initialize(fileName.c_str(), -1, mFbxSdkManager->GetIOSettings());
 	if (!bSuccess)
-		return false;
+		return nullptr;
 
 	bSuccess = pImport->Import(fbxScene);
 	if (!bSuccess)
-		return false;
+		return nullptr;
 
 	pImport->Destroy();
 
-	printf("%s을 불러오고 있습니다\n", fileName.c_str());
-	ParseSkeletonHierarchy(fbxScene->GetRootNode());
+	Mesh* pMesh = new Mesh();
 
-	if (mSkeleton.mVecJoint.empty())
+	printf("%s을 불러오고 있습니다\n", fileName.c_str());
+	pMesh->SetBone(ParseSkeletonHierarchy(fbxScene->GetRootNode()));
+
+	bool IsBoneAnimation;
+
+	if (pMesh->GetBone() == nullptr)
 	{
 		printf("no skeleton \n");
 		IsBoneAnimation = false;
@@ -383,8 +396,10 @@ BOOL FBXLoader::LoadFBX(const string fileName)
 	else
 		IsBoneAnimation = true;
 
-	ParseNode(fbxScene->GetRootNode());
+	vector<Subset*>& mSubset = pMesh->GetSubset();
+
+	ParseNode(fbxScene->GetRootNode(), mSubset);
 	fclose(fp);
 
-	return true;
+	return pMesh;
 }

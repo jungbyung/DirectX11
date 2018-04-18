@@ -5,7 +5,7 @@ cbuffer cbPerObject
 	float4x4 gWorld;
 	float4x4 gViewProj;
 	Material gMaterial;
-	DirectionLight gDirLight;
+	DirectionalLight gDirLight;
 
 	float3 gEyePos;
 };

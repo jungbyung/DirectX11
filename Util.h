@@ -34,9 +34,9 @@ namespace JB
 		XMFLOAT4 mReflect;
 	};
 
-	struct DirectionLight
+	struct DirectionalLight
 	{
-		DirectionLight() { ZeroMemory(this, sizeof(this)); }
+		DirectionalLight() { ZeroMemory(this, sizeof(this)); }
 		XMFLOAT4 mAmbient;
 		XMFLOAT4 mDiffuse;
 		XMFLOAT4 mSpecular;
@@ -57,6 +57,8 @@ namespace JB
 	};
 
 	HRESULT Line(ID3D11Device* pDevice, ID3D11DeviceContext* dc, XMFLOAT3 x1, XMFLOAT3 x2, XMFLOAT4 color, CXMMATRIX ViewProj);
+
+	XMMATRIX InverseTranspose(CXMMATRIX M);
 };
 
 class Util
@@ -72,6 +74,7 @@ public:
 	static const D3D11_INPUT_ELEMENT_DESC pc[2];
 	static const D3D11_INPUT_ELEMENT_DESC pt[2];
 	static const D3D11_INPUT_ELEMENT_DESC pnt[3];
+	static const D3D11_INPUT_ELEMENT_DESC pnts[6];
 };
 
 class Layout
@@ -85,4 +88,45 @@ public:
 	static ID3D11InputLayout* mPC;
 	static ID3D11InputLayout* mPT;
 	static ID3D11InputLayout* mPNT;
+	static ID3D11InputLayout* mPNTS;
 };
+
+template<class T>
+class Singleton
+{
+private:
+	static T* Instance;
+public:
+	Singleton();
+	~Singleton();
+
+	static T* GetSingleton();
+	void deleteSingleton();
+};
+
+template<class T>
+T* Singleton<T>::Instance = nullptr;
+
+template<class T>
+inline Singleton<T>::Singleton()
+{
+}
+
+template<class T>
+inline Singleton<T>::~Singleton()
+{
+}
+
+template<class T>
+inline T * Singleton<T>::GetSingleton()
+{
+	if (Instance) Instance = new T;
+	return Instance;
+}
+
+template<class T>
+inline void Singleton<T>::deleteSingleton()
+{
+	if (Instance)
+		SafeDelete(Instance);
+}

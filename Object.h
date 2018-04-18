@@ -21,7 +21,7 @@ public:
 	Object();
 	virtual ~Object();
 
-	virtual void Update();
+	virtual void Update(const float deltaTime = 0.0f);
 
 	void SetPosition(FXMVECTOR pos);
 	void MovePosition(FXMVECTOR delta);

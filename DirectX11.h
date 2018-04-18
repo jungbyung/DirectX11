@@ -8,6 +8,7 @@ class TextureCube;
 class Camera;
 class ColorCube;
 class Grid;
+class Mesh;
 
 class DirectX11 : public App
 {
@@ -19,7 +20,9 @@ private:
 	TextureCube* mTCube;
 	ColorCube* mCCube;
 
-	DirectionLight mDirLight;
+	DirectionalLight mDirLight;
+
+	Mesh* mMesh;
 public:
 	DirectX11(HINSTANCE hInstance);
 	~DirectX11();

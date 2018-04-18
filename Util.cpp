@@ -25,10 +25,20 @@ const D3D11_INPUT_ELEMENT_DESC LayoutDesc::pnt[] =
 	{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 };
+const D3D11_INPUT_ELEMENT_DESC LayoutDesc::pnts[6] =
+{
+	{ "POSITION",     0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{ "NORMAL",       0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{ "TEXCOORD",     0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{ "TANGENT",      0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{ "WEIGHTS",      0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 48, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{ "BONEINDICES",  0, DXGI_FORMAT_R8G8B8A8_UINT,   0, 60, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+};
 
 ID3D11InputLayout* Layout::mPC = nullptr;
 ID3D11InputLayout* Layout::mPT = nullptr;
 ID3D11InputLayout* Layout::mPNT = nullptr;
+ID3D11InputLayout* Layout::mPNTS = nullptr;
 
 Layout::Layout()
 {
@@ -39,6 +49,7 @@ Layout::~Layout()
 	ReleaseCOM(mPC);
 	ReleaseCOM(mPT);
 	ReleaseCOM(mPNT);
+	ReleaseCOM(mPNTS);
 }
 
 VOID Layout::Init(ID3D11Device * pDevice)
@@ -53,6 +64,9 @@ VOID Layout::Init(ID3D11Device * pDevice)
 
 	Effects::TextureEffectFX->mTech->GetPassByIndex(0)->GetDesc(&passDesc);
 	pDevice->CreateInputLayout(LayoutDesc::pt, 2, passDesc.pIAInputSignature, passDesc.IAInputSignatureSize, &mPT);
+
+	Effects::MeshEffectFX->mTech->GetPassByIndex(0)->GetDesc(&passDesc);
+	pDevice->CreateInputLayout(LayoutDesc::pnts, 6, passDesc.pIAInputSignature, passDesc.IAInputSignatureSize, &mPNTS);
 }
 
 HRESULT JB::Line(ID3D11Device * pDevice, ID3D11DeviceContext * dc, XMFLOAT3 x1, XMFLOAT3 x2, XMFLOAT4 color, CXMMATRIX ViewProj)
@@ -118,4 +132,13 @@ HRESULT JB::Line(ID3D11Device * pDevice, ID3D11DeviceContext * dc, XMFLOAT3 x1, 
 	ReleaseCOM(mVB);
 	ReleaseCOM(mIB);
 	return S_OK;
+}
+
+XMMATRIX JB::InverseTranspose(CXMMATRIX M)
+{
+	XMMATRIX A = M;
+	A.r[3] = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+
+	XMVECTOR det = XMMatrixDeterminant(A);
+	return XMMatrixTranspose(XMMatrixInverse(&det, A));
 }

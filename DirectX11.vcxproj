@@ -215,6 +215,7 @@
   <ItemGroup>
     <FxCompile Include="FX\Basic.fx" />
     <FxCompile Include="FX\Light.fx" />
+    <FxCompile Include="FX\Mesh.fx" />
     <FxCompile Include="FX\PointColor.fx">
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(RelativeDir)\%(Filename).fxo</ObjectFileOutput>
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RelativeDir)%(Filename).fxo</ObjectFileOutput>

@@ -25,7 +25,7 @@ Object::~Object()
 	SafeDelete(mParent);
 }
 
-void Object::Update()
+void Object::Update(const float deltaTime)
 {
 	XMVECTOR r = XMLoadFloat3(&mRight);
 	XMVECTOR u = XMLoadFloat3(&mUp);

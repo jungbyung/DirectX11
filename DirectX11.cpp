@@ -9,6 +9,7 @@
 #include "Util.h"
 #include "Grid.h"
 #include "FBXLoader.h"
+#include "Mesh.h"
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 	PSTR cmdLine, int showCmd)
@@ -56,8 +57,15 @@ HRESULT DirectX11::Init()
 
 	//mTCube->SetPosition(1, 0, 0);
 
-	if (FBXLoader::LoadFBX("aa"))
-		printf("true");
+	mMesh = LOADFBX->LoadFBX("./resource/model/model.fbx");
+	mMesh->Initialize(mDevice);
+
+	XMVECTOR q;
+
+	//q = XMQuaternionRotationRollPitchYawFromVector(XMVectorSet(-90, 90, 0, 0));
+
+	//mMesh->SetRotation(q);
+	//mMesh->SetScale(XMVectorSet(0.1f, 0.1f, 0.1f, 0));
 
 	mDirLight.Direction = XMFLOAT3(0, 0, 1);
 
@@ -67,7 +75,7 @@ HRESULT DirectX11::Init()
 
 	mCamera = new Camera;
 	mCamera->SetLens(0.25*XM_PI, (static_cast<float>(mClientWidth) / mClientHeight), 1.0f, 1000.0f);
-	mCamera->SetPosition(XMVectorSet(0, 5, -10, 0));
+	mCamera->SetPosition(XMVectorSet(0, 5, -20, 0));
 	mCamera->LookAt(XMLoadFloat3(&mCamera->GetPosition()), XMLoadFloat3(&mCube->GetPosition()));
 
 	return S_OK;
@@ -87,6 +95,8 @@ VOID DirectX11::UpdateScene(float dt)
 	mCamera->LookAt(XMLoadFloat3(&mCamera->GetPosition()), XMLoadFloat3(&mCube->GetPosition()));
 	mCamera->Update();
 
+	mMesh->Update(dt);
+
 	if (GetAsyncKeyState(VK_F1) & 0x8001)
 	{
 		mSwapChain->SetFullscreenState(s, nullptr);
@@ -102,11 +112,15 @@ VOID DirectX11::DrawScene()
 
 	XMMATRIX ViewProj = XMMatrixMultiply(XMLoadFloat4x4(&mCamera->GetView()), XMLoadFloat4x4(&mCamera->GetProj()));
 
+	Effects::MeshEffectFX->SetDirLights(&mDirLight);
+
 	mGrid->Draw(mImmediateContext, ViewProj);
 	//Line(mDevice, mImmediateContext, XMFLOAT3(-2, 0, 0), XMFLOAT3(2, 0, 0), XMFLOAT4(1, 1, 1, 1), mCamera->GetViewProj());
 	//mCube->Draw(mImmediateContext, mCamera->GetViewProj());
 	mCCube->Draw(mImmediateContext, ViewProj);
 	//mTCube->Draw(mImmediateContext, mCamera->GetViewProj());
+
+	mMesh->Draw(mImmediateContext, ViewProj);
 
 	mSwapChain->Present(0, 0);
 }

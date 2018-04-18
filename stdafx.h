@@ -53,5 +53,8 @@ using namespace DirectX;
 
 #include "Effect.h"
 #include "Util.h"
+#include "FBXLoader.h"
 
 using namespace JB;
+
+#define LOADFBX FBXLoader::GetSingleton()

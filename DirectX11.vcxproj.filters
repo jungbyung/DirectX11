@@ -146,5 +146,8 @@
     <FxCompile Include="FX\Basic.fx">
       <Filter>FX</Filter>
     </FxCompile>
+    <FxCompile Include="FX\Mesh.fx">
+      <Filter>FX</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

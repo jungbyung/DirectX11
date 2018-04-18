@@ -37,12 +37,14 @@ PointEffect::~PointEffect()
 PointEffect*			Effects::PointEffectFX = nullptr;
 TextureEffect*			Effects::TextureEffectFX = nullptr;
 BasicEffect*			Effects::BasicEffectFX = nullptr;
+MeshEffect*				Effects::MeshEffectFX = nullptr;
 
 VOID Effects::Init(ID3D11Device * pDevice)
 {
 	PointEffectFX = new PointEffect(pDevice, "fx/PointColor.fxo");
 	TextureEffectFX = new TextureEffect(pDevice, "fx/Texture.fxo");
 	BasicEffectFX = new BasicEffect(pDevice, "fx/Basic.fxo");
+	MeshEffectFX = new MeshEffect(pDevice, "fx/Mesh.fxo");
 }
 
 TextureEffect::TextureEffect(ID3D11Device * pDevice, const char * fileName)
@@ -67,5 +69,25 @@ BasicEffect::BasicEffect(ID3D11Device * pDevice, const char* fileName)
 }
 
 BasicEffect::~BasicEffect()
+{
+}
+
+MeshEffect::MeshEffect(ID3D11Device * pDevice, const char * fileName)
+	: Effect(pDevice, fileName)
+{
+	mTech = mFX->GetTechniqueByName("v");
+
+	World = mFX->GetVariableByName("gWorld")->AsMatrix();
+	WorldInvTranspose = mFX->GetVariableByName("gWorldInvTranspose")->AsMatrix();
+	BoneTransforms = mFX->GetVariableByName("gBoneTransforms")->AsMatrix();
+	WorldViewProj = mFX->GetVariableByName("gWorldViewProj")->AsMatrix();
+	DiffuseMap = mFX->GetVariableByName("gDiffuseMap")->AsShaderResource();
+	NormalMap = mFX->GetVariableByName("gNormalMap")->AsShaderResource();
+	EyePosW = mFX->GetVariableByName("gEyePosW")->AsVector();
+	DirLights = mFX->GetVariableByName("gDirLights");
+	Mat = mFX->GetVariableByName("gMaterial");
+}
+
+MeshEffect::~MeshEffect()
 {
 }
