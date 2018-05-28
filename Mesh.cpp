@@ -1,6 +1,28 @@
 #include "stdafx.h"
 #include "Mesh.h"
 
+void Subset::operVertexShader(vector<XMFLOAT4X4> mat)
+{
+	float w[4] = { 0, };
+	XMMATRIX m;
+	for (int i = 0; i < mVertices.size(); i++)
+	{
+		w[0] = mVertices[i].mWeight[0];
+		w[1] = mVertices[i].mWeight[1];
+		w[2] = mVertices[i].mWeight[2];
+		w[3] = 1.0 - mVertices[i].mWeight[0] - mVertices[i].mWeight[1] - mVertices[i].mWeight[2];
+
+		XMVECTOR v = XMVectorZero();
+		XMVECTOR p = XMLoadFloat3(&mVertices[i].mPos);
+		for (int j = 0; j < 4; j++)
+		{
+			m = XMLoadFloat4x4(&mat[mVertices[i].mIndices[j]]);
+			v += w[j] * XMVector3TransformCoord(p, m);
+			XMStoreFloat3(&mVertices[i].mPos, v);
+		}
+	}
+}
+
 void Subset::Initialize(ID3D11Device * pDevice)
 {
 	D3D11_BUFFER_DESC vbd;
@@ -60,18 +82,37 @@ Mesh::~Mesh()
 {
 	SafeDelete(mBone);
 }
-
+void ddVectorTransform(Bone * bone, vector<string>& m)
+{
+	m.push_back(bone->GetName());
+	for (int i = 0; i < bone->GetChildNum(); i++)
+	{
+		ddVectorTransform(bone->GetChild(i), m);
+	}
+}
 void Mesh::Initialize(ID3D11Device * pDevice)
 {
+	XMFLOAT4X4 m;
+	XMStoreFloat4x4(&m, XMMatrixIdentity());
+	for (int i = 0; i < 148; i++)
+	{
+		mTransform.push_back(m);
+	}
 	for (UINT i = 0; i < mSubset.size(); i++)
 	{
+		mSubset[i]->operVertexShader(mTransform);
 		mSubset[i]->Initialize(pDevice);
 	}
+	//vector<string> m;
+	//JB::AddVectorTransform(mBone, mTransform);
+	//ddVectorTransform(mBone, m);
+	out();
 }
 
 void Mesh::Update(const float deltaTime)
 {
 	Object::Update(deltaTime);
+	Object::Moving(deltaTime);
 	for (UINT i = 0; i < mSubset.size(); i++)
 	{
 		mSubset[i]->Update(deltaTime);
@@ -90,6 +131,7 @@ void Mesh::Draw(ID3D11DeviceContext * dc, CXMMATRIX viewproj)
 
 	XMMATRIX mat;
 	mat = XMLoadFloat4x4(&mWorld);
+	//mat = XMMatrixIdentity();
 
 	XMMATRIX worldInvTranspose = InverseTranspose(mat);
 	XMMATRIX worldViewProj = mat * viewproj;
@@ -97,6 +139,7 @@ void Mesh::Draw(ID3D11DeviceContext * dc, CXMMATRIX viewproj)
 	Effects::MeshEffectFX->SetWorld(mat);
 	Effects::MeshEffectFX->SetWorldInvTranspose(worldInvTranspose);
 	Effects::MeshEffectFX->SetWorldViewProj(worldViewProj);
+	Effects::MeshEffectFX->SetBoneTransforms(&mTransform[0], mTransform.size());
 
 	for (UINT p = 0; p < techDesc.Passes; ++p)
 	{
@@ -110,6 +153,43 @@ void Mesh::Draw(ID3D11DeviceContext * dc, CXMMATRIX viewproj)
 			mSubset[i]->Draw(dc);
 		}
 	}
+}
+
+void Mesh::out()
+{
+	FILE* fp;
+
+	fopen_s(&fp, "./ww.txt", "w");
+	fprintf(fp, "%d\n", mSubset.size());
+	for (int i = 0; i < mSubset.size(); ++i)
+	{
+		//fprintf(fp, "%s %s %s\n", mSubset[i]->.c_str(), mSubset[i]->specular.c_str(), mSubset[i]->noraml.c_str());
+		fprintf(fp, "%f %f %f %f\n", mSubset[i]->GetMaterial().mDiffuse.x, mSubset[i]->GetMaterial().mDiffuse.y, mSubset[i]->GetMaterial().mDiffuse.z, mSubset[i]->GetMaterial().mDiffuse.w);
+		fprintf(fp, "%f %f %f %f\n", mSubset[i]->GetMaterial().mAmbient.x, mSubset[i]->GetMaterial().mAmbient.y, mSubset[i]->GetMaterial().mAmbient.z, mSubset[i]->GetMaterial().mAmbient.w);
+		fprintf(fp, "%f %f %f %f\n", mSubset[i]->GetMaterial().mSpecular.x, mSubset[i]->GetMaterial().mSpecular.y, mSubset[i]->GetMaterial().mSpecular.z, mSubset[i]->GetMaterial().mSpecular.w);
+		fprintf(fp, "%f %f %f %f\n", mSubset[i]->GetMaterial().mReflect.x, mSubset[i]->GetMaterial().mReflect.y, mSubset[i]->GetMaterial().mReflect.z, mSubset[i]->GetMaterial().mReflect.w);
+		fprintf(fp, "%d\n", mSubset[i]->GetVertices().size());
+		for (int j = 0; j < mSubset[i]->GetVertices().size(); j++)
+		{
+			fprintf(fp, "%f %f %f\n", mSubset[i]->GetVertices()[j].mPos.x,
+				mSubset[i]->GetVertices()[j].mPos.y, mSubset[i]->GetVertices()[j].mPos.z);
+			fprintf(fp, "%f %f %f\n", mSubset[i]->GetVertices()[j].mNormal.x,
+				mSubset[i]->GetVertices()[j].mNormal.y, mSubset[i]->GetVertices()[j].mNormal.z);
+			fprintf(fp, "%f %f\n", mSubset[i]->GetVertices()[j].mUV.x,
+				mSubset[i]->GetVertices()[j].mUV.y);
+			fprintf(fp, "%f %f %f %f\n", mSubset[i]->GetVertices()[j].mTangentU.x,
+				mSubset[i]->GetVertices()[j].mTangentU.y, mSubset[i]->GetVertices()[j].mTangentU.z,
+				mSubset[i]->GetVertices()[j].mTangentU.w);
+			fprintf(fp, "%f %f %f\n", mSubset[i]->GetVertices()[j].mWeight[0],
+				mSubset[i]->GetVertices()[j].mWeight[1], mSubset[i]->GetVertices()[j].mWeight[2]);
+			fprintf(fp, "%d %d %d %d\n", mSubset[i]->GetVertices()[j].mIndices[0],
+				mSubset[i]->GetVertices()[j].mIndices[1], mSubset[i]->GetVertices()[j].mIndices[2],
+				mSubset[i]->GetVertices()[j].mIndices[3]);
+		}
+	}
+	fprintf(fp, "%d\n", mTransform.size());
+	JB::OutBoneName(&fp, mBone);
+	fclose(fp);
 }
 
 StaticMesh::StaticMesh()

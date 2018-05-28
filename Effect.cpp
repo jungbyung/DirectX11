@@ -76,6 +76,7 @@ MeshEffect::MeshEffect(ID3D11Device * pDevice, const char * fileName)
 	: Effect(pDevice, fileName)
 {
 	mTech = mFX->GetTechniqueByName("v");
+	//mTech = mFX->GetTechniqueByName("Skinned");
 
 	World = mFX->GetVariableByName("gWorld")->AsMatrix();
 	WorldInvTranspose = mFX->GetVariableByName("gWorldInvTranspose")->AsMatrix();

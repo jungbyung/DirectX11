@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Util.h"
+#include "Mesh.h"
 
 Util::Util()
 {
@@ -56,6 +57,9 @@ VOID Layout::Init(ID3D11Device * pDevice)
 {
 	D3DX11_PASS_DESC passDesc;
 
+	Effects::MeshEffectFX->mTech->GetPassByIndex(0)->GetDesc(&passDesc);
+	HRESULT hr = pDevice->CreateInputLayout(LayoutDesc::pnts, 6, passDesc.pIAInputSignature, passDesc.IAInputSignatureSize, &mPNTS);
+
 	Effects::PointEffectFX->mTech->GetPassByIndex(0)->GetDesc(&passDesc);
 	pDevice->CreateInputLayout(LayoutDesc::pc, 2, passDesc.pIAInputSignature, passDesc.IAInputSignatureSize, &mPC);
 
@@ -64,9 +68,6 @@ VOID Layout::Init(ID3D11Device * pDevice)
 
 	Effects::TextureEffectFX->mTech->GetPassByIndex(0)->GetDesc(&passDesc);
 	pDevice->CreateInputLayout(LayoutDesc::pt, 2, passDesc.pIAInputSignature, passDesc.IAInputSignatureSize, &mPT);
-
-	Effects::MeshEffectFX->mTech->GetPassByIndex(0)->GetDesc(&passDesc);
-	pDevice->CreateInputLayout(LayoutDesc::pnts, 6, passDesc.pIAInputSignature, passDesc.IAInputSignatureSize, &mPNTS);
 }
 
 HRESULT JB::Line(ID3D11Device * pDevice, ID3D11DeviceContext * dc, XMFLOAT3 x1, XMFLOAT3 x2, XMFLOAT4 color, CXMMATRIX ViewProj)
@@ -141,4 +142,46 @@ XMMATRIX JB::InverseTranspose(CXMMATRIX M)
 
 	XMVECTOR det = XMMatrixDeterminant(A);
 	return XMMatrixTranspose(XMMatrixInverse(&det, A));
+}
+
+void JB::FindStringToBone(const string & JointName, IN Bone* bone, OUT Bone** b)
+{
+	if (bone->FindStringOfBone(JointName))
+	{
+		*b = bone;
+		return;
+	}
+	for (UINT i = 0; i < bone->GetChildNum(); i++)
+	{
+		if (*b != nullptr) return;
+		FindStringToBone(JointName, bone->GetChild(i), b);
+	}
+}
+
+void JB::AddVectorTransform(Bone * bone, vector<XMFLOAT4X4>& m)
+{
+	m.push_back(bone->GetMatrix());
+	for (int i = 0; i < bone->GetChildNum(); i++)
+	{
+		AddVectorTransform(bone->GetChild(i), m);
+	}
+}
+
+void JB::OutBoneName(FILE** fp, Bone * bone)
+{
+	fprintf((*fp), "%s %d\n", bone->GetName().c_str(), bone->GetIndex());
+
+	for (int i = 0; i < 4; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			fprintf(*fp, "%f ", bone->GetMatrix().m[i][j]);
+		}
+		fprintf(*fp, "\n");
+	}
+
+	for (int i = 0; i < bone->GetChildNum(); i++)
+	{
+		OutBoneName(&(*fp), bone->GetChild(i));
+	}
 }

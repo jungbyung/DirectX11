@@ -7,13 +7,13 @@ public:
 	Bone() {}
 	~Bone()
 	{
-		SafeDelete(mParent);
-		vector<Bone*>::iterator siter = mChilds.begin();
-		vector<Bone*>::iterator eiter = mChilds.end();
-		for (siter; siter != eiter; ++siter)
-		{
-			SafeDelete(*siter);
-		}
+		//SafeDelete(mParent);
+		//vector<Bone*>::iterator siter = mChilds.begin();
+		//vector<Bone*>::iterator eiter = mChilds.end();
+		//for (siter; siter != eiter; ++siter)
+		//{
+		//	SafeDelete(*siter);
+		//}
 	}
 
 	VOID Initialize(string name, int index, CXMMATRIX mat = XMMatrixIdentity(), Bone* parent = nullptr)
@@ -26,7 +26,7 @@ public:
 
 	Bone* GetChild(int index) const
 	{
-		if (mChilds.size() >= index) return nullptr;
+		if (mChilds.size() <= index) return nullptr;
 
 		return mChilds[index];
 	}
@@ -34,6 +34,23 @@ public:
 	void AddChild(Bone* bone)
 	{
 		mChilds.push_back(bone);
+	}
+
+	bool FindStringOfBone(const string& str)
+	{
+		if (mName.compare(str) == 0)
+			return true;
+		return false;
+	}
+
+	UINT GetChildNum() const
+	{
+		return mChilds.size();
+	}
+
+	void SetMatrix(CXMMATRIX mat)
+	{
+		XMStoreFloat4x4(&mMat, mat);
 	}
 	Bone* GetParent() { return mParent; };
 	const XMFLOAT4X4& GetMatrix() { return mMat; }
@@ -98,6 +115,7 @@ public:
 		return nullptr;
 	}
 	Material GetMaterial() { return mMaterial; }
+	void operVertexShader(vector<XMFLOAT4X4> mat);
 	void Initialize(ID3D11Device * pDevice);
 	virtual void Update(const float deltaTime);
 	void Draw(ID3D11DeviceContext * dc);
@@ -134,9 +152,12 @@ public:
 	void SetBone(Bone* bone) { mBone = bone; }
 
 	vector<Subset*>& GetSubset() { return mSubset; }
+
+	void out();
 private:
 	vector<Subset*> mSubset;
 	Bone* mBone;
+	vector<XMFLOAT4X4> mTransform;
 };
 
 class StaticMesh : public Object

@@ -43,7 +43,7 @@ struct SkinnedVertexIn
 	float3 Pos : POSITION;
 	float3 Normal : NORMAL;
 	float2 Tex : TEXCOORD;
-	float4 Tangent : TAANGENT;
+	float4 Tangent : TANGENT;
 	float3 Weights : WEIGHTS;
 	uint4 BoneIndices : BONEINDICES;
 };
@@ -96,8 +96,8 @@ VertexOut SkinnedVS(SkinnedVertexIn vin)
 	vout.Tangent = float4(mul(tangent, (float3x3)gWorld), vin.Tangent.w);
 
 	vout.PosH = mul(float4(pos, 1.0f), gWorldViewProj);
-	//vout.Tex = mul(float4(vin.Tex, 0.0f, 1.0f), gTexTransform).xy;
-	vout.Tex = vin.Tex;
+	vout.Tex = mul(float4(vin.Tex, 0.0f, 1.0f), gTexTransform).xy;
+	//vout.Tex = vin.Tex;
 	//vout.PosW = mul(float4(vin.Pos, 1.0f), gWorld).xyz;
 	//vout.Normal = mul(vin.Normal, (float3x3)gWorldInvTranspose);
 	//vout.Tangent = mul(vin.Tangent, gWorld);

@@ -1,5 +1,6 @@
 #pragma once
 
+class Bone;
 namespace JB
 {
 	struct PC
@@ -20,7 +21,7 @@ namespace JB
 		XMFLOAT3 mPos;
 		XMFLOAT3 mNormal;
 		XMFLOAT2 mUV;
-		XMFLOAT3 mTangentU;
+		XMFLOAT4 mTangentU;
 		FLOAT mWeight[3];
 		BYTE mIndices[4];
 	};
@@ -59,6 +60,16 @@ namespace JB
 	HRESULT Line(ID3D11Device* pDevice, ID3D11DeviceContext* dc, XMFLOAT3 x1, XMFLOAT3 x2, XMFLOAT4 color, CXMMATRIX ViewProj);
 
 	XMMATRIX InverseTranspose(CXMMATRIX M);
+
+	void FindStringToBone(const string & JointName, IN Bone* bone, OUT Bone** b);
+	void AddVectorTransform(Bone* bone, vector<XMFLOAT4X4>& m);
+	void OutBoneName(FILE** fp, Bone* bone);
+
+	template<class T1, class T2>
+	void AddT1ToT2(T1* t1, vector<T2>& t2)
+	{
+		t2.push_back(t1);
+	}
 };
 
 class Util

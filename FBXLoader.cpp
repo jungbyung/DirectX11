@@ -40,18 +40,19 @@ VOID FBXLoader::ParseSkeletonHierarchyRecursively(FbxNode * pNode, int inDepth, 
 	}
 }
 
-VOID FBXLoader::ParseNode(FbxNode * pNode, vector<Subset*>& subsets)
+VOID FBXLoader::ParseNode(FbxNode * pNode, vector<Subset*>& subsets, Bone* bone)
 {
 	if (pNode->GetMesh())
 	{
 		vector<JB::Vertex> vecPNT;
 		ParseControlPoint(pNode, vecPNT);
+		ParseBone(pNode, bone, vecPNT);
 		ParseVertexInfo(pNode, vecPNT, subsets);
 		ParseMaterial(pNode, subsets);
 	}
 	for (int i = 0; i < pNode->GetChildCount(); ++i)
 	{
-		ParseNode(pNode->GetChild(i), subsets);
+		ParseNode(pNode->GetChild(i), subsets, bone);
 	}
 }
 
@@ -64,8 +65,8 @@ VOID FBXLoader::ParseControlPoint(FbxNode * pNode, vector<JB::Vertex>& ver)
 		Vertex pnt;
 		pnt.mPos.x = static_cast<float>(pMesh->GetControlPointAt(i).mData[0]);
 		pnt.mPos.y = static_cast<float>(pMesh->GetControlPointAt(i).mData[1]);
-		pnt.mPos.z = static_cast<float>(pMesh->GetControlPointAt(i).mData[2]);
-
+		pnt.mPos.z = -static_cast<float>(pMesh->GetControlPointAt(i).mData[2]);
+		XMStoreFloat3(&pnt.mPos, XMVector3TransformCoord(XMLoadFloat3(&pnt.mPos), XMMatrixIdentity()));
 		ZeroMemory(pnt.mIndices, sizeof(pnt.mIndices));
 		ZeroMemory(pnt.mWeight, sizeof(pnt.mWeight));
 		ver.push_back(pnt);
@@ -107,6 +108,7 @@ VOID FBXLoader::ParseVertexInfo(FbxNode * pNode, vector<JB::Vertex>& ver, vector
 		mapSubset[SubsetIndexNum]->GetIndices().push_back(Subindex[SubsetIndexNum]++);
 		mapSubset[SubsetIndexNum]->GetIndices().push_back(Subindex[SubsetIndexNum]++);
 	}
+	SafeDelete(Subindex);
 
 	ver.clear();
 }
@@ -119,6 +121,95 @@ VOID FBXLoader::ParseMaterial(FbxNode * pNode, vector<Subset*>& subsets)
 		auto surfaceMaterial = pNode->GetMaterial(i);
 		ParseMaterialAttribute(surfaceMaterial, i, subsets[subsets.size() - materialCount + i]);
 		ParseMaterialTexture(surfaceMaterial, i, subsets[subsets.size() - materialCount + i]);
+	}
+}
+
+VOID FBXLoader::ParseBone(FbxNode * pNode, Bone* bone, vector<JB::Vertex>& ver)
+{
+	FbxMesh* fbxMesh = pNode->GetMesh();
+
+	string name = pNode->GetName();
+	UINT numOfDeformers = fbxMesh->GetDeformerCount();
+
+	FbxAMatrix geometryTransform = GetGeometryTransformation(pNode);
+
+	for (UINT deformerIndex = 0; deformerIndex < numOfDeformers; ++deformerIndex)
+	{
+		FbxSkin* pSkin = reinterpret_cast<FbxSkin*>(fbxMesh->GetDeformer(deformerIndex, FbxDeformer::eSkin));
+		if (!pSkin) continue;
+
+		UINT numOfClusters = pSkin->GetClusterCount();
+		for (UINT clusterIndex = 0; clusterIndex < numOfClusters; ++clusterIndex)
+		{
+			FbxCluster* pCluster = pSkin->GetCluster(clusterIndex);
+			string sJointName = pCluster->GetLink()->GetName();
+			//UINT JointIndex = FindJointIndexUsingName(sJointName);
+			Bone* b = nullptr;
+			FindStringToBone(sJointName, bone, &b);
+			FbxAMatrix transformMatrix;
+			FbxAMatrix transformLinkMatrix;
+			FbxAMatrix globalBindposeInversMatrix;
+
+			pCluster->GetTransformMatrix(transformMatrix);
+			pCluster->GetTransformLinkMatrix(transformLinkMatrix);
+			globalBindposeInversMatrix = transformLinkMatrix.Inverse() * transformMatrix * geometryTransform;
+
+			XMFLOAT4X4 m4x4;
+			if (strcmp(sJointName.c_str(), "Bip01") == 0)
+			{
+				int s = 0;
+			}
+			ConvertFbxMatrix(globalBindposeInversMatrix, m4x4);
+
+			b->SetMatrix(XMLoadFloat4x4(&m4x4));
+
+			UINT numofIndices = pCluster->GetControlPointIndicesCount();
+			for (UINT i = 0; i < numofIndices; ++i)
+			{
+				int a = pCluster->GetControlPointIndices()[i];
+				for (UINT j = 0; j < 4; j++)
+				{
+					if (ver[a].mIndices[j] == 0)
+					{
+						ver[a].mIndices[j] = b->GetIndex() + 1;
+						if (j < 3)
+							ver[a].mWeight[j] = static_cast<float>(pCluster->GetControlPointWeights()[i]);
+						break;
+					}
+				}
+			}
+
+			//m_sSkeleton.mJoint[JointIndex].mat = globalBindposeInversMatrix;
+		}
+	}
+}
+
+FbxAMatrix FBXLoader::GetGeometryTransformation(FbxNode * pNode)
+{
+	const FbxVector4 lT = pNode->GetGeometricTranslation(FbxNode::eSourcePivot);
+	const FbxVector4 lR = pNode->GetGeometricRotation(FbxNode::eSourcePivot);
+	const FbxVector4 lS = pNode->GetGeometricScaling(FbxNode::eSourcePivot);
+
+	return FbxAMatrix(lT, lR, lS);
+}
+
+void FBXLoader::ConvertFbxMatrix(FbxAMatrix mat, OUT XMFLOAT4X4& m4x4)
+{
+	FbxVector4 t = mat.GetT();
+	FbxVector4 r = mat.GetR();
+
+	t.Set(t.mData[0], t.mData[1], -t.mData[2]);
+	r.Set(-r.mData[0], -r.mData[1], r.mData[2]);
+
+	mat.SetT(t);
+	mat.SetR(r);
+
+	for (int i = 0; i < 4; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			m4x4.m[i][j] = mat.Get(i, j);
+		}
 	}
 }
 
@@ -383,7 +474,7 @@ Mesh* FBXLoader::LoadFBX(const string fileName)
 
 	Mesh* pMesh = new Mesh();
 
-	printf("%sÀ» ºÒ·¯¿À°í ÀÖ½À´Ï´Ù\n", fileName.c_str());
+	printf("%sì„ ë¶ˆëŸ¬ì˜¤ê³  ìžˆìŠµë‹ˆë‹¤\n", fileName.c_str());
 	pMesh->SetBone(ParseSkeletonHierarchy(fbxScene->GetRootNode()));
 
 	bool IsBoneAnimation;
@@ -397,8 +488,8 @@ Mesh* FBXLoader::LoadFBX(const string fileName)
 		IsBoneAnimation = true;
 
 	vector<Subset*>& mSubset = pMesh->GetSubset();
-
-	ParseNode(fbxScene->GetRootNode(), mSubset);
+	Bone* bone = pMesh->GetBone();
+	ParseNode(fbxScene->GetRootNode(), mSubset, bone);
 	fclose(fp);
 
 	return pMesh;

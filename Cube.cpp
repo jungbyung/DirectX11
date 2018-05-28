@@ -97,7 +97,7 @@ HRESULT Cube::Init(ID3D11Device * pDevice)
 VOID Cube::Update(float delta)
 {
 	Object::Update();
-	Object::Moving(delta);
+	//Object::Moving(delta);
 }
 
 VOID Cube::Draw(ID3D11DeviceContext * dc, CXMMATRIX ViewProj)
