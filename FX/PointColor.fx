@@ -27,9 +27,9 @@ float cartoonColor(float c)
 		return 0.4f;
 	else if (c <= 0.5f)
 		return 0.6f;
-	else if (c <= 1.0f)
-		return 1.0f;
-	return 0.0f;
+	else if (c > 1.0f)
+		return 0.0f;
+	return 1.0f;
 }
 
 VertexOut VS(VertexIn vin)

@@ -5,12 +5,13 @@ void Subset::operVertexShader(vector<XMFLOAT4X4> mat)
 {
 	float w[4] = { 0, };
 	XMMATRIX m;
-	for (int i = 0; i < mVertices.size(); i++)
+	int n = mVertices.size();
+	for (int i = 0; i < n; i++)
 	{
 		w[0] = mVertices[i].mWeight[0];
 		w[1] = mVertices[i].mWeight[1];
 		w[2] = mVertices[i].mWeight[2];
-		w[3] = 1.0 - mVertices[i].mWeight[0] - mVertices[i].mWeight[1] - mVertices[i].mWeight[2];
+		w[3] = 1.0f - mVertices[i].mWeight[0] - mVertices[i].mWeight[1] - mVertices[i].mWeight[2];
 
 		XMVECTOR v = XMVectorZero();
 		XMVECTOR p = XMLoadFloat3(&mVertices[i].mPos);
@@ -81,11 +82,17 @@ Mesh::Mesh()
 Mesh::~Mesh()
 {
 	SafeDelete(mBone);
+	UINT n = mSubset.size();
+	for (UINT i = 0; i < n; i++)
+	{
+		SafeDelete(mSubset[i]);
+	}
 }
 void ddVectorTransform(Bone * bone, vector<string>& m)
 {
 	m.push_back(bone->GetName());
-	for (int i = 0; i < bone->GetChildNum(); i++)
+	UINT n = bone->GetChildNum();
+	for (UINT i = 0; i < n; i++)
 	{
 		ddVectorTransform(bone->GetChild(i), m);
 	}
@@ -100,7 +107,7 @@ void Mesh::Initialize(ID3D11Device * pDevice)
 	}
 	for (UINT i = 0; i < mSubset.size(); i++)
 	{
-		mSubset[i]->operVertexShader(mTransform);
+		//mSubset[i]->operVertexShader(mTransform);
 		mSubset[i]->Initialize(pDevice);
 	}
 	//vector<string> m;
@@ -161,7 +168,8 @@ void Mesh::out()
 
 	fopen_s(&fp, "./ww.txt", "w");
 	fprintf(fp, "%d\n", mSubset.size());
-	for (int i = 0; i < mSubset.size(); ++i)
+	UINT n = mSubset.size();
+	for (UINT i = 0; i < n; ++i)
 	{
 		//fprintf(fp, "%s %s %s\n", mSubset[i]->.c_str(), mSubset[i]->specular.c_str(), mSubset[i]->noraml.c_str());
 		fprintf(fp, "%f %f %f %f\n", mSubset[i]->GetMaterial().mDiffuse.x, mSubset[i]->GetMaterial().mDiffuse.y, mSubset[i]->GetMaterial().mDiffuse.z, mSubset[i]->GetMaterial().mDiffuse.w);
@@ -169,7 +177,8 @@ void Mesh::out()
 		fprintf(fp, "%f %f %f %f\n", mSubset[i]->GetMaterial().mSpecular.x, mSubset[i]->GetMaterial().mSpecular.y, mSubset[i]->GetMaterial().mSpecular.z, mSubset[i]->GetMaterial().mSpecular.w);
 		fprintf(fp, "%f %f %f %f\n", mSubset[i]->GetMaterial().mReflect.x, mSubset[i]->GetMaterial().mReflect.y, mSubset[i]->GetMaterial().mReflect.z, mSubset[i]->GetMaterial().mReflect.w);
 		fprintf(fp, "%d\n", mSubset[i]->GetVertices().size());
-		for (int j = 0; j < mSubset[i]->GetVertices().size(); j++)
+		UINT m = mSubset[i]->GetVertices().size();
+		for (UINT j = 0; j < m; j++)
 		{
 			fprintf(fp, "%f %f %f\n", mSubset[i]->GetVertices()[j].mPos.x,
 				mSubset[i]->GetVertices()[j].mPos.y, mSubset[i]->GetVertices()[j].mPos.z);

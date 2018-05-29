@@ -62,8 +62,9 @@ HRESULT DirectX11::Init()
 
 	XMVECTOR q;
 
-	q = XMQuaternionRotationRollPitchYaw(90, 90, 0);
+	//q = XMQuaternionRotationRollPitchYaw(90, 90, 0);
 
+	q = XMVectorSet(XM_PI / 2.f, XM_PI / 2.0f, 0, 0);
 	mMesh->SetRotation(q);
 	mMesh->SetScale(XMVectorSet(0.1f, 0.1f, 0.1f, 0));
 

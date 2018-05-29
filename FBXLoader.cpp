@@ -155,13 +155,9 @@ VOID FBXLoader::ParseBone(FbxNode * pNode, Bone* bone, vector<JB::Vertex>& ver)
 			globalBindposeInversMatrix = transformLinkMatrix.Inverse() * transformMatrix * geometryTransform;
 
 			XMFLOAT4X4 m4x4;
-			if (strcmp(sJointName.c_str(), "Bip01") == 0)
-			{
-				int s = 0;
-			}
 			ConvertFbxMatrix(globalBindposeInversMatrix, m4x4);
 
-			b->SetMatrix(XMLoadFloat4x4(&m4x4));
+			b->SetMatrix(m4x4);
 
 			UINT numofIndices = pCluster->GetControlPointIndicesCount();
 			for (UINT i = 0; i < numofIndices; ++i)
@@ -195,6 +191,36 @@ FbxAMatrix FBXLoader::GetGeometryTransformation(FbxNode * pNode)
 
 void FBXLoader::ConvertFbxMatrix(FbxAMatrix mat, OUT XMFLOAT4X4& m4x4)
 {
+	//FbxVector4 t = mat.GetT();
+	//FbxVector4 r = mat.GetR();
+	//
+	//t.Set(t.mData[0], t.mData[1], -t.mData[2]);
+	//r.Set(-r.mData[0], -r.mData[1], r.mData[2]);
+	//
+	//mat.SetT(t);
+	//mat.SetR(r);
+
+	for (int i = 0; i < 4; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			m4x4.m[i][j] = static_cast<float>(mat.Get(i, j));
+		}
+	}
+}
+
+void FBXLoader::BoneMatrixPath(Bone * bone)
+{
+	FbxAMatrix mat;
+	XMFLOAT4X4 m4x4 = bone->GetMatrix();
+	for (int i = 0; i < 4; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			mat.mData[i][j] = m4x4.m[i][j];
+		}
+	}
+
 	FbxVector4 t = mat.GetT();
 	FbxVector4 r = mat.GetR();
 
@@ -208,8 +234,15 @@ void FBXLoader::ConvertFbxMatrix(FbxAMatrix mat, OUT XMFLOAT4X4& m4x4)
 	{
 		for (int j = 0; j < 4; j++)
 		{
-			m4x4.m[i][j] = mat.Get(i, j);
+			m4x4.m[i][j] = static_cast<float>(mat.Get(i, j));
 		}
+	}
+
+	bone->SetMatrix(m4x4);
+	UINT n = bone->GetChildNum();
+	for (UINT i = 0; i < n; i++)
+	{
+		BoneMatrixPath(bone->GetChild(i));
 	}
 }
 
@@ -474,7 +507,7 @@ Mesh* FBXLoader::LoadFBX(const string fileName)
 
 	Mesh* pMesh = new Mesh();
 
-	printf("%s을 불러오고 있습니다\n", fileName.c_str());
+	printf("%s loading...\n", fileName.c_str());
 	pMesh->SetBone(ParseSkeletonHierarchy(fbxScene->GetRootNode()));
 
 	bool IsBoneAnimation;
@@ -490,7 +523,11 @@ Mesh* FBXLoader::LoadFBX(const string fileName)
 	vector<Subset*>& mSubset = pMesh->GetSubset();
 	Bone* bone = pMesh->GetBone();
 	ParseNode(fbxScene->GetRootNode(), mSubset, bone);
-	fclose(fp);
 
+	chrono::system_clock::time_point start = chrono::system_clock::now();
+
+	BoneMatrixPath(bone);
+	chrono::duration<double> sec = chrono::system_clock::now() - start;
+	cout << sec.count() << " seconds" << endl;
 	return pMesh;
 }

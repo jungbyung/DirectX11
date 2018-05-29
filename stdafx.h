@@ -36,8 +36,9 @@
 #include <vector>
 #include <fbxsdk.h>
 #include <comdef.h>
+#include <chrono>
 
-//_bstr_t b(ws/s) -> wchar_t* <-> char* º¯È¯
+//_bstr_t b(ws/s) -> wchar_t* <-> char* ï¿½ï¿½È¯
 
 #pragma comment(lib, "libfbxsdk-md.lib")
 

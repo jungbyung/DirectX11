@@ -161,7 +161,8 @@ void JB::FindStringToBone(const string & JointName, IN Bone* bone, OUT Bone** b)
 void JB::AddVectorTransform(Bone * bone, vector<XMFLOAT4X4>& m)
 {
 	m.push_back(bone->GetMatrix());
-	for (int i = 0; i < bone->GetChildNum(); i++)
+	UINT n = bone->GetChildNum();
+	for (UINT i = 0; i < n; i++)
 	{
 		AddVectorTransform(bone->GetChild(i), m);
 	}
@@ -179,8 +180,8 @@ void JB::OutBoneName(FILE** fp, Bone * bone)
 		}
 		fprintf(*fp, "\n");
 	}
-
-	for (int i = 0; i < bone->GetChildNum(); i++)
+	UINT n = bone->GetChildNum();
+	for (UINT i = 0; i < n; i++)
 	{
 		OutBoneName(&(*fp), bone->GetChild(i));
 	}

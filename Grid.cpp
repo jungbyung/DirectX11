@@ -17,7 +17,7 @@ HRESULT Grid::Init(ID3D11Device * pDevice, int size)
 	mSize = size;
 
 	auto totalV = mSize * 4;
-	auto cell = mSize / 2;
+	auto cell = mSize / 2.0f;
 
 	PC *v = new PC[totalV + 2];
 	int a = 0;

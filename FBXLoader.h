@@ -39,6 +39,9 @@ private:
 	FbxAMatrix GetGeometryTransformation(FbxNode * pNode);
 
 	void ConvertFbxMatrix(FbxAMatrix mat, OUT XMFLOAT4X4& m4x4);
+
+	void BoneMatrixPath(Bone* bone);
+
 public:
 	Mesh* LoadFBX(const string fileName);
 };

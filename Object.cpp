@@ -93,7 +93,9 @@ void Object::SetRotation(FXMVECTOR rot)
 	XMMATRIX matY = XMMatrixRotationY(Rot.y);
 	XMMATRIX matZ = XMMatrixRotationZ(Rot.z);
 
-	XMMATRIX XYZ = XMMatrixRotationQuaternion(rot);
+	//XMMATRIX XYZ = XMMatrixRotationQuaternion(rot);
+
+	XMMATRIX XYZ = matX * matY * matZ;
 
 	XMVECTOR r = XMVector3Normalize(XMLoadFloat3(&mRight));
 	XMVECTOR u = XMVector3Normalize(XMLoadFloat3(&mUp));

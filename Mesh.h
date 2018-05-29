@@ -7,13 +7,11 @@ public:
 	Bone() {}
 	~Bone()
 	{
-		//SafeDelete(mParent);
-		//vector<Bone*>::iterator siter = mChilds.begin();
-		//vector<Bone*>::iterator eiter = mChilds.end();
-		//for (siter; siter != eiter; ++siter)
-		//{
-		//	SafeDelete(*siter);
-		//}
+		UINT n = GetChildNum();
+		for (UINT i = 0; i < n; i++)
+		{
+			SafeDelete(mChilds[i]);
+		}
 	}
 
 	VOID Initialize(string name, int index, CXMMATRIX mat = XMMatrixIdentity(), Bone* parent = nullptr)
@@ -24,7 +22,7 @@ public:
 		mParent = parent;
 	}
 
-	Bone* GetChild(int index) const
+	Bone* GetChild(UINT index) const
 	{
 		if (mChilds.size() <= index) return nullptr;
 
@@ -38,8 +36,10 @@ public:
 
 	bool FindStringOfBone(const string& str)
 	{
-		if (mName.compare(str) == 0)
+		if (strcmp(mName.c_str(), str.c_str()) == 0)
 			return true;
+		//if (mName.compare(str) == 0)
+		//	return true;
 		return false;
 	}
 
@@ -48,9 +48,9 @@ public:
 		return mChilds.size();
 	}
 
-	void SetMatrix(CXMMATRIX mat)
+	void SetMatrix(XMFLOAT4X4 mat)
 	{
-		XMStoreFloat4x4(&mMat, mat);
+		mMat = mat;
 	}
 	Bone* GetParent() { return mParent; };
 	const XMFLOAT4X4& GetMatrix() { return mMat; }
