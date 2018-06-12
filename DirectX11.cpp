@@ -58,14 +58,10 @@ HRESULT DirectX11::Init()
 	//mTCube->SetPosition(1, 0, 0);
 
 	mMesh = LOADFBX->LoadFBX("./resource/model/model.fbx");
+	LOADFBX->LoadFBXAnimation("./resource/model/model.fbx", mMesh);
 	mMesh->Initialize(mDevice);
 
-	XMVECTOR q;
-
-	//q = XMQuaternionRotationRollPitchYaw(90, 90, 0);
-
-	q = XMVectorSet(XM_PI / 2.f, XM_PI / 2.0f, 0, 0);
-	mMesh->SetRotation(q);
+	mMesh->SetRotation(XMVectorSet(XM_PI / 2.f, XM_PI / 2.0f, 0, 0));
 	mMesh->SetScale(XMVectorSet(0.1f, 0.1f, 0.1f, 0));
 
 	mDirLight.Direction = XMFLOAT3(0, 0, 1);
@@ -76,9 +72,9 @@ HRESULT DirectX11::Init()
 
 	mCamera = new Camera;
 	mCamera->SetLens(0.25*XM_PI, (static_cast<float>(mClientWidth) / mClientHeight), 1.0f, 1000.0f);
-	mCamera->SetPosition(XMVectorSet(0, 5, -20, 0));
+	mCamera->SetPosition(XMVectorSet(0, 2, -7, 0));
 	mCamera->LookAt(XMLoadFloat3(&mCamera->GetPosition()), XMLoadFloat3(&mMesh->GetPosition()));
-
+	mCamera->LookAt(XMLoadFloat3(&mCamera->GetPosition()), XMVectorSet(0, 2, 0, 0));
 	return S_OK;
 }
 
@@ -93,7 +89,7 @@ VOID DirectX11::UpdateScene(float dt)
 	mCube->Update(dt);
 	mCCube->Update(dt);
 	//mTCube->Update(dt);
-	mCamera->LookAt(XMLoadFloat3(&mCamera->GetPosition()), XMLoadFloat3(&mMesh->GetPosition()));
+	//mCamera->LookAt(XMLoadFloat3(&mCamera->GetPosition()), XMLoadFloat3(&mMesh->GetPosition()));
 	mCamera->Update();
 
 	mMesh->Update(dt);

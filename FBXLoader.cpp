@@ -482,18 +482,20 @@ Mesh* FBXLoader::LoadFBX(const string fileName)
 	FILE* fp;
 
 	fopen_s(&fp, fileName.c_str(), "r");
-	FbxManager* mFbxSdkManager;
 
-	mFbxSdkManager = nullptr;
-	if (!mFbxSdkManager)
+	FbxManager* mFbxSdkManager = nullptr;
+	FbxImporter* pImport;
+	FbxScene *fbxScene;
+
+	//if (!mFbxSdkManager)
 	{
 		mFbxSdkManager = FbxManager::Create();
 		FbxIOSettings* pIOsettings = FbxIOSettings::Create(mFbxSdkManager, IOSROOT);
 		mFbxSdkManager->SetIOSettings(pIOsettings);
 	}
 
-	FbxImporter* pImport = FbxImporter::Create(mFbxSdkManager, "");
-	FbxScene *fbxScene = FbxScene::Create(mFbxSdkManager, "");
+	pImport = FbxImporter::Create(mFbxSdkManager, "");
+	fbxScene = FbxScene::Create(mFbxSdkManager, "");
 
 	bool bSuccess = pImport->Initialize(fileName.c_str(), -1, mFbxSdkManager->GetIOSettings());
 	if (!bSuccess)
@@ -529,5 +531,82 @@ Mesh* FBXLoader::LoadFBX(const string fileName)
 	BoneMatrixPath(bone);
 	chrono::duration<double> sec = chrono::system_clock::now() - start;
 	cout << sec.count() << " seconds" << endl;
+
 	return pMesh;
+}
+
+void FBXLoader::ParseFindAnimation(FbxNode * pNode, FbxScene* fs, OUT Mesh* pMesh)
+{
+	if (pNode->GetMesh())
+	{
+		ParseAnimation(pNode, fs, pMesh);
+	}
+	int childCount = pNode->GetChildCount();
+	for (int i = 0; i < childCount; i++)
+	{
+		ParseFindAnimation(pNode->GetChild(i), fs, pMesh);
+	}
+}
+
+void FBXLoader::ParseAnimation(FbxNode * pNode, FbxScene* fs, OUT Mesh* pMesh)
+{
+	FbxMesh* fbxMesh = pNode->GetMesh();
+
+	string name = pNode->GetName();
+	UINT numOfDeformers = fbxMesh->GetDeformerCount();
+
+	FbxAMatrix geometryTransform = GetGeometryTransformation(pNode);
+	for (UINT deformerIndex = 0; deformerIndex < numOfDeformers; ++deformerIndex)
+	{
+		FbxSkin* pSkin = reinterpret_cast<FbxSkin*>(fbxMesh->GetDeformer(deformerIndex, FbxDeformer::eSkin));
+		if (!pSkin) continue;
+
+		UINT numOfClusters = pSkin->GetClusterCount();
+
+		UINT numOfClusters = pSkin->GetClusterCount();
+		for (UINT clusterIndex = 0; clusterIndex < numOfClusters; ++clusterIndex)
+		{
+			FbxCluster* pCluster = pSkin->GetCluster(clusterIndex);
+			string sJointName = pCluster->GetLink()->GetName();
+
+			FbxAnimStack* pAnimStack = fs->GetSrcObject<FbxAnimStack>(0);
+			FbxString animStackName = pAnimStack->GetName();
+			string sAnimationName = animStackName.Buffer();
+			FbxTakeInfo* takeInfo = fs->GetTakeInfo(animStackName);
+			FbxTime start = takeInfo->mLocalTimeSpan.GetStart();
+			FbxTime end = takeInfo->mLocalTimeSpan.GetStop();
+			FbxLongLong length = end.GetFrameCount(FbxTime::eFrames24) - start.GetFrameCount(FbxTime::eFrames24) + 1;
+			for (FbxLongLong i = start.GetFrameCount(FbxTime::eFrames24); i < end.GetFrameCount(FbxTime::eFrames24); ++i)
+			{
+				FbxTime currTime;
+				currTime.SetFrame(i, FbxTime::eFrames24);
+				FbxAMatrix currMat = pNode->EvaluateGlobalTransform(currTime) * geometryTransform;
+				currMat = currMat.Inverse() * pCluster->GetLink()->EvaluateGlobalTransform(currTime);
+				XMFLOAT4X4 mat;
+				ConvertFbxMatrix(currMat, mat);
+			}
+		}
+	}
+}
+void FBXLoader::LoadFBXAnimation(const string fileName, OUT Mesh* pMesh)
+{
+	FbxManager* mFbxSdkManager = nullptr;
+	FbxImporter* pImport;
+	FbxScene *fbxScene;
+
+	if (!mFbxSdkManager)
+	{
+		mFbxSdkManager = FbxManager::Create();
+		FbxIOSettings* pIOsettings = FbxIOSettings::Create(mFbxSdkManager, IOSROOT);
+		mFbxSdkManager->SetIOSettings(pIOsettings);
+	}
+
+	pImport = FbxImporter::Create(mFbxSdkManager, "");
+	fbxScene = FbxScene::Create(mFbxSdkManager, "");
+
+	pImport->Initialize(fileName.c_str(), -1, mFbxSdkManager->GetIOSettings());
+
+	printf("%s loading...\n", fileName.c_str());
+	pImport->Import(fbxScene);
+	ParseFindAnimation(fbxScene->GetRootNode(), fbxScene, pMesh);
 }

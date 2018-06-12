@@ -42,6 +42,12 @@ private:
 
 	void BoneMatrixPath(Bone* bone);
 
+	void ParseFindAnimation(FbxNode* pNode, FbxScene* fs, OUT Mesh* pMesh);
+	void ParseAnimation(FbxNode* pNode, FbxScene* fs, OUT Mesh* pMesh);
+
+private:
 public:
 	Mesh* LoadFBX(const string fileName);
+
+	void LoadFBXAnimation(const string fileName, OUT Mesh* pMesh);
 };

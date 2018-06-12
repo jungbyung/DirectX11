@@ -77,6 +77,12 @@ void Subset::Draw(ID3D11DeviceContext * dc)
 
 Mesh::Mesh()
 {
+	XMFLOAT4X4 m;
+	XMStoreFloat4x4(&m, XMMatrixIdentity());
+	for (int i = 0; i < 148; i++)
+	{
+		mTransform.push_back(m);
+	}
 }
 
 Mesh::~Mesh()
@@ -88,28 +94,16 @@ Mesh::~Mesh()
 		SafeDelete(mSubset[i]);
 	}
 }
-void ddVectorTransform(Bone * bone, vector<string>& m)
-{
-	m.push_back(bone->GetName());
-	UINT n = bone->GetChildNum();
-	for (UINT i = 0; i < n; i++)
-	{
-		ddVectorTransform(bone->GetChild(i), m);
-	}
-}
 void Mesh::Initialize(ID3D11Device * pDevice)
 {
-	XMFLOAT4X4 m;
-	XMStoreFloat4x4(&m, XMMatrixIdentity());
-	for (int i = 0; i < 148; i++)
-	{
-		mTransform.push_back(m);
-	}
 	for (UINT i = 0; i < mSubset.size(); i++)
 	{
 		//mSubset[i]->operVertexShader(mTransform);
 		mSubset[i]->Initialize(pDevice);
 	}
+
+	//std::copy(mTransform.begin(), mTransform.end(), mAnimation[0].begin());
+
 	//vector<string> m;
 	//JB::AddVectorTransform(mBone, mTransform);
 	//ddVectorTransform(mBone, m);

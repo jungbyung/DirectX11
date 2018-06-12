@@ -152,7 +152,6 @@ public:
 	void SetBone(Bone* bone) { mBone = bone; }
 
 	vector<Subset*>& GetSubset() { return mSubset; }
-
 	void out();
 private:
 	vector<Subset*> mSubset;

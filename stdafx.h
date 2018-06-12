@@ -38,7 +38,7 @@
 #include <comdef.h>
 #include <chrono>
 
-//_bstr_t b(ws/s) -> wchar_t* <-> char* ��ȯ
+//_bstr_t b(ws/s) -> wchar_t* <-> char* trans
 
 #pragma comment(lib, "libfbxsdk-md.lib")
 
